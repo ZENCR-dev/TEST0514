@@ -35,15 +35,15 @@ const roleNames: Record<UserRole, string> = {
   admin: '管理员',
   doctor: '医生',
   pharmacy: '药房',
-  patient: '患者'
+  // patient: '患者' // Patient role is not defined in UserRole type
 };
 
 // 角色标签颜色映射
-const roleColors: Record<UserRole, string> = {
+const roleTagColors: Record<UserRole, string> = {
   admin: 'bg-purple-100 text-purple-700',
   doctor: 'bg-blue-100 text-blue-700',
   pharmacy: 'bg-green-100 text-green-700',
-  patient: 'bg-amber-100 text-amber-700'
+  // patient: 'bg-amber-100 text-amber-700' // Patient role is not defined in UserRole type
 };
 
 export default function UsersListPage() {
@@ -307,7 +307,7 @@ export default function UsersListPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 rounded text-xs ${roleColors[user.role]}`}>
+                      <span className={`px-2 py-1 rounded text-xs ${roleTagColors[user.role]}`}>
                         {roleNames[user.role]}
                       </span>
                     </TableCell>

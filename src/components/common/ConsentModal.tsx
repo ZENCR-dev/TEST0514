@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { useRouter } from 'next/router';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface ConsentModalProps {
   isOpen: boolean;
@@ -9,6 +11,7 @@ interface ConsentModalProps {
   onConfirm: () => void;
   title?: string;
   consentMessage?: string;
+  checkboxLabel?: string;
   confirmText?: string;
   cancelText?: string;
   waitTime?: number; // 新增等待时间参数，单位：秒
@@ -21,6 +24,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({
   onConfirm,
   title = "使用须知",
   consentMessage = "我已阅读并理解此为测试版本，所有数据均为模拟，仅用于功能演示，不构成真实医疗建议或交易，并同意相关使用条款。",
+  checkboxLabel,
   confirmText = "我已阅读并同意",
   cancelText = "取消",
   waitTime = 3, // 默认等待3秒
@@ -28,6 +32,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState(waitTime);
   const [canConfirm, setCanConfirm] = useState(false);
+  const [isChecked, setIsChecked] = useState(false);
   const router = useRouter();
 
   // 重置状态当模态框打开/关闭时
@@ -35,6 +40,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({
     if (isOpen) {
       setTimeLeft(waitTime);
       setCanConfirm(false);
+      setIsChecked(false);
       
       // 倒计时逻辑
       const timer = setInterval(() => {
@@ -86,6 +92,15 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({
           <p>{consentMessage}</p>
         </div>
 
+        {checkboxLabel && (
+          <div className="flex items-center space-x-2 mb-6">
+            <Checkbox id="consent-checkbox" checked={isChecked} onCheckedChange={(checked) => setIsChecked(checked === true)} />
+            <Label htmlFor="consent-checkbox" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              {checkboxLabel}
+            </Label>
+          </div>
+        )}
+
         <div className="flex justify-end space-x-3">
           <Button
             variant="outline"
@@ -96,7 +111,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({
           </Button>
           <Button
             onClick={onConfirm}
-            disabled={!canConfirm}
+            disabled={!canConfirm || (checkboxLabel ? !isChecked : false)}
             className="px-4 py-2"
           >
             {timeLeft > 0 ? `${confirmText} (${timeLeft}s)` : confirmText}

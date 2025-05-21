@@ -1,0 +1,806 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Best practices for React and Next.js development in the TCM Prescription Platform
+globs: **/*.{js,jsx,ts,tsx}
+---
+
+# React and Next.js Best Practices
+
+## Component Structure
+- Use functional components over class components
+- Keep components small and focused
+- Extract reusable logic into custom hooks
+- Use composition over inheritance
+- Implement proper prop types with TypeScript
+- Split large components into smaller, focused ones
+
+## Hooks
+- Follow the Rules of Hooks
+- Use custom hooks for reusable logic
+- Keep hooks focused and simple
+- Use appropriate dependency arrays in useEffect
+- Implement cleanup in useEffect when needed
+- Avoid nested hooks
+
+## State Management
+- Use useState for local component state
+- Implement useReducer for complex state logic
+- Use Context API for shared state
+- Keep state as close to where it's used as possible
+- Avoid prop drilling through proper state management
+- Use state management libraries only when necessary
+
+## Performance
+- Implement proper memoization (useMemo, useCallback)
+- Use React.memo for expensive components
+- Avoid unnecessary re-renders
+- Implement proper lazy loading
+- Use proper key props in lists
+- Profile and optimize render performance
+
+## Forms
+- Use controlled components for form inputs
+- Implement proper form validation
+- Handle form submission states properly
+- Show appropriate loading and error states
+- Use form libraries for complex forms
+- Implement proper accessibility for forms
+
+## Error Handling
+- Implement Error Boundaries
+- Handle async errors properly
+- Show user-friendly error messages
+- Implement proper fallback UI
+- Log errors appropriately
+- Handle edge cases gracefully
+
+## Testing
+- Write unit tests for components
+- Implement integration tests for complex flows
+- Use React Testing Library
+- Test user interactions
+- Test error scenarios
+- Implement proper mock data
+
+## Accessibility
+- Use semantic HTML elements
+- Implement proper ARIA attributes
+- Ensure keyboard navigation
+- Test with screen readers
+- Handle focus management
+- Provide proper alt text for images
+
+## Code Organization
+- Group related components together
+- Use proper file naming conventions
+- Implement proper directory structure
+- Keep styles close to components
+- Use proper imports/exports
+- Document complex component logic 
+
+
+
+# React and Next.js Development Standards
+
+## Component Structure
+
+### Functional Components
+```tsx
+// Good Example
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import type { UserProfile } from '@/types';
+
+interface ProfileCardProps {
+  user: UserProfile;
+  onEdit?: () => void;
+}
+
+export function ProfileCard({ user, onEdit }: ProfileCardProps) {
+  const { isAdmin } = useAuth();
+  
+  return (
+    <div className="rounded-md bg-white p-4 shadow-sm">
+      <h3 className="text-lg font-medium">{user.name}</h3>
+      <p className="text-gray-500">{user.email}</p>
+      
+      {isAdmin && onEdit && (
+        <Button onClick={onEdit}>
+          Edit Profile
+        </Button>
+      )}
+    </div>
+  );
+}
+```
+
+### Component File Structure
+- Export default component or named exports
+- Keep related components in the same file or directory
+- Use index.ts files to expose public API
+
+## Hooks Usage
+
+### Custom Hooks
+```tsx
+// Good Example
+import { useState, useEffect } from 'react';
+import { SKU } from '@/types';
+import { searchSkus } from '@/services/skuService';
+
+export function useSkuSearch(initialQuery = '') {
+  const [query, setQuery] = useState(initialQuery);
+  const [results, setResults] = useState<SKU[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+
+    searchSkus(query)
+      .then(data => {
+        if (isMounted) {
+          setResults(data);
+        }
+      })
+      .catch(err => {
+        if (isMounted) {
+          setError(err);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [query]);
+
+  return { query, setQuery, results, loading, error };
+}
+```
+
+### Effect Cleanup
+- Always clean up side effects in useEffect
+- Use the isMounted pattern for async operations
+- Cancel pending requests on unmount
+
+## State Management
+
+### Local vs. Global State
+- Use local state for component-specific data
+- Use global state for shared application state
+- Consider where state is needed before choosing approach
+
+### Zustand Store
+```tsx
+// Good Example
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { SKU } from '@/types';
+
+interface CartState {
+  items: { sku: SKU; quantity: number }[];
+  addItem: (sku: SKU, quantity: number) => void;
+  removeItem: (skuId: string) => void;
+  updateQuantity: (skuId: string, quantity: number) => void;
+  clearCart: () => void;
+}
+
+export const useCartStore = create<CartState>()(
+  persist(
+    (set) => ({
+      items: [],
+      addItem: (sku, quantity) => set((state) => {
+        const existingItem = state.items.find(item => item.sku.id === sku.id);
+        if (existingItem) {
+          return {
+            items: state.items.map(item => 
+              item.sku.id === sku.id 
+                ? { ...item, quantity: item.quantity + quantity } 
+                : item
+            )
+          };
+        }
+        return { items: [...state.items, { sku, quantity }] };
+      }),
+      removeItem: (skuId) => set((state) => ({
+        items: state.items.filter(item => item.sku.id !== skuId)
+      })),
+      updateQuantity: (skuId, quantity) => set((state) => ({
+        items: state.items.map(item => 
+          item.sku.id === skuId ? { ...item, quantity } : item
+        )
+      })),
+      clearCart: () => set({ items: [] })
+    }),
+    {
+      name: 'tcm-cart-storage',
+    }
+  )
+);
+```
+
+## Tailwind CSS Patterns
+
+### Component Class Organization
+- Group related classes together
+- Order classes by layout, spacing, typography, colors, and other
+- Extract common patterns with @apply in global.css
+
+### Responsive Design
+```tsx
+// Good Example
+<div className="flex flex-col md:flex-row gap-2 md:gap-4">
+  <div className="w-full md:w-1/3 p-2 md:p-4">
+    {/* Sidebar content */}
+  </div>
+  <div className="w-full md:w-2/3 p-2 md:p-4">
+    {/* Main content */}
+  </div>
+</div>
+```
+
+### Dark Mode Support
+- Use dark: variants when needed
+- Test both light and dark modes
+- Consider system preferences
+
+## Form Handling
+
+### Form Validation
+```tsx
+// Good Example
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+const formSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+export function LoginForm({ onSubmit }) {
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: '',
+      password: '',
+    },
+  });
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="username"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Username</FormLabel>
+              <FormControl>
+                <Input placeholder="Enter username" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="Enter password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit">Submit</Button>
+      </form>
+    </Form>
+  );
+}
+```
+
+## Error Handling
+
+### API Error Handling
+```tsx
+// Good Example
+import { useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { createOrder } from '@/services/orderService';
+
+export function OrderSubmitButton({ items, onSuccess }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const handleSubmit = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const result = await createOrder(items);
+      onSuccess(result);
+    } catch (err) {
+      setError(err.message || 'Failed to submit order');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  return (
+    <div>
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <Button 
+        onClick={handleSubmit} 
+        disabled={isLoading}
+        className="w-full"
+      >
+        {isLoading ? 'Processing...' : 'Submit Order'}
+      </Button>
+    </div>
+  );
+}
+```
+
+## Performance Optimization
+
+### Memoization
+```tsx
+// Good Example
+import React, { useMemo, useCallback } from 'react';
+
+interface ExpensiveComponentProps {
+  data: number[];
+  onProcess: (result: number) => void;
+}
+
+export function ExpensiveComponent({ data, onProcess }: ExpensiveComponentProps) {
+  // Memoize expensive calculation
+  const processedData = useMemo(() => {
+    return data.reduce((sum, item) => sum + item, 0);
+  }, [data]);
+  
+  // Memoize callback to prevent unnecessary re-renders in child components
+  const handleClick = useCallback(() => {
+    onProcess(processedData);
+  }, [onProcess, processedData]);
+  
+  return (
+    <div>
+      <p>Processed Result: {processedData}</p>
+      <button onClick={handleClick}>Submit Result</button>
+    </div>
+  );
+}
+
+// Prevent re-renders when parent re-renders but props haven't changed
+export default React.memo(ExpensiveComponent);
+```
+```
+
+# Testing and Quality Assurance Standards
+
+```markdown
+---
+description: Testing standards for ensuring code quality in the TCM Prescription Platform
+globs: **/*.{test,spec}.{js,jsx,ts,tsx}
+---
+
+# Testing Standards
+
+## Unit Testing
+
+### Component Tests
+```tsx
+// Good Example
+import { render, screen, fireEvent } from '@testing-library/react';
+import { SKUSearchBar } from './SKUSearchBar';
+
+describe('SKUSearchBar', () => {
+  const mockOnSearch = jest.fn();
+  
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('renders search input correctly', () => {
+    render(<SKUSearchBar onSearch={mockOnSearch} />);
+    expect(screen.getByPlaceholderText('Search SKUs...')).toBeInTheDocument();
+  });
+  
+  it('calls onSearch prop when form is submitted', () => {
+    render(<SKUSearchBar onSearch={mockOnSearch} />);
+    const input = screen.getByPlaceholderText('Search SKUs...');
+    const searchTerm = 'ginseng';
+    
+    fireEvent.change(input, { target: { value: searchTerm } });
+    fireEvent.submit(screen.getByRole('form'));
+    
+    expect(mockOnSearch).toHaveBeenCalledWith(searchTerm);
+  });
+  
+  it('disables the submit button when input is empty', () => {
+    render(<SKUSearchBar onSearch={mockOnSearch} />);
+    const button = screen.getByRole('button', { name: /search/i });
+    
+    expect(button).toBeDisabled();
+    
+    fireEvent.change(screen.getByPlaceholderText('Search SKUs...'), {
+      target: { value: 'test' }
+    });
+    
+    expect(button).not.toBeDisabled();
+  });
+});
+```
+
+### Hook Tests
+```tsx
+// Good Example
+import { renderHook, act } from '@testing-library/react';
+import { useSkuSearch } from './useSkuSearch';
+import { searchSkus } from '@/services/skuService';
+
+// Mock the service
+jest.mock('@/services/skuService', () => ({
+  searchSkus: jest.fn()
+}));
+
+describe('useSkuSearch', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('returns empty results when query is empty', async () => {
+    const { result } = renderHook(() => useSkuSearch());
+    
+    expect(result.current.results).toEqual([]);
+    expect(result.current.loading).toBe(false);
+    expect(searchSkus).not.toHaveBeenCalled();
+  });
+  
+  it('fetches results when query changes', async () => {
+    const mockResults = [{ id: '1', name: 'Ginseng' }];
+    (searchSkus as jest.Mock).mockResolvedValue(mockResults);
+    
+    const { result, waitForNextUpdate } = renderHook(() => useSkuSearch());
+    
+    act(() => {
+      result.current.setQuery('ginseng');
+    });
+    
+    expect(result.current.loading).toBe(true);
+    
+    await waitForNextUpdate();
+    
+    expect(searchSkus).toHaveBeenCalledWith('ginseng');
+    expect(result.current.results).toEqual(mockResults);
+    expect(result.current.loading).toBe(false);
+  });
+  
+  it('handles search errors', async () => {
+    const error = new Error('Failed to fetch');
+    (searchSkus as jest.Mock).mockRejectedValue(error);
+    
+    const { result, waitForNextUpdate } = renderHook(() => useSkuSearch());
+    
+    act(() => {
+      result.current.setQuery('invalid');
+    });
+    
+    await waitForNextUpdate();
+    
+    expect(result.current.error).toEqual(error);
+    expect(result.current.loading).toBe(false);
+  });
+});
+```
+
+## Integration Testing
+
+### User Flow Tests
+```tsx
+// Good Example
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { OrderPage } from './OrderPage';
+import { createOrder } from '@/services/orderService';
+
+jest.mock('@/services/orderService');
+
+describe('Order Workflow', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('completes the order process successfully', async () => {
+    // Mock successful order creation
+    const mockOrderResult = { id: 'order123', status: 'success' };
+    (createOrder as jest.Mock).mockResolvedValue(mockOrderResult);
+    
+    // Render the page with necessary providers
+    render(
+      <AuthProvider initialUser={{ id: 'user1', role: 'doctor' }}>
+        <CartProvider initialItems={[{ sku: { id: 'sku1', name: 'Ginseng' }, quantity: 2 }]}>
+          <OrderPage />
+        </CartProvider>
+      </AuthProvider>
+    );
+    
+    // Verify cart items are displayed
+    expect(screen.getByText('Ginseng')).toBeInTheDocument();
+    expect(screen.getByText('Qty: 2')).toBeInTheDocument();
+    
+    // Click confirm order
+    fireEvent.click(screen.getByText('Confirm Order'));
+    
+    // Fill in prescription details in modal
+    await waitFor(() => {
+      expect(screen.getByText('Order Confirmation')).toBeInTheDocument();
+    });
+    
+    fireEvent.change(screen.getByLabelText('Prescription Fee'), {
+      target: { value: '10' }
+    });
+    
+    fireEvent.click(screen.getByText('Proceed'));
+    
+    // Wait for order processing
+    await waitFor(() => {
+      expect(screen.getByText('Processing')).toBeInTheDocument();
+    });
+    
+    // Verify success state
+    await waitFor(() => {
+      expect(screen.getByText('Order Placed Successfully')).toBeInTheDocument();
+      expect(screen.getByText('Order #: order123')).toBeInTheDocument();
+    });
+    
+    // Verify order service was called correctly
+    expect(createOrder).toHaveBeenCalledWith({
+      items: [{ skuId: 'sku1', quantity: 2 }],
+      prescriptionFee: 10,
+      orderMultiplier: 1 // Default value
+    });
+  });
+  
+  it('displays error message when order creation fails', async () => {
+    // Mock failed order creation
+    (createOrder as jest.Mock).mockRejectedValue(new Error('Network error'));
+    
+    // Render the page with necessary providers
+    render(
+      <AuthProvider initialUser={{ id: 'user1', role: 'doctor' }}>
+        <CartProvider initialItems={[{ sku: { id: 'sku1', name: 'Ginseng' }, quantity: 2 }]}>
+          <OrderPage />
+        </CartProvider>
+      </AuthProvider>
+    );
+    
+    // Click confirm order
+    fireEvent.click(screen.getByText('Confirm Order'));
+    
+    // Fill in prescription details in modal
+    await waitFor(() => {
+      expect(screen.getByText('Order Confirmation')).toBeInTheDocument();
+    });
+    
+    fireEvent.click(screen.getByText('Proceed'));
+    
+    // Verify error state
+    await waitFor(() => {
+      expect(screen.getByText('Failed to create order')).toBeInTheDocument();
+      expect(screen.getByText('Network error')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+## Test Organization
+
+### Mock Data
+```tsx
+// Good Example - src/mocks/skuData.ts
+import { SKU } from '@/types';
+
+export const mockSKUs: SKU[] = [
+  {
+    id: 'sku_001',
+    chineseName: '人参',
+    englishName: 'Ginseng',
+    pinyinName: 'renshen',
+    pricePerGram: 2.5
+  },
+  {
+    id: 'sku_002',
+    chineseName: '西洋参',
+    englishName: 'American Ginseng',
+    pinyinName: 'xiyangsen',
+    pricePerGram: 3.2
+  },
+  // More mock SKUs...
+];
+
+export const createMockSKU = (overrides = {}): SKU => ({
+  id: `sku_${Math.random().toString(36).substring(2, 7)}`,
+  chineseName: '测试',
+  englishName: 'Test SKU',
+  pinyinName: 'ceshi',
+  pricePerGram: 1.0,
+  ...overrides
+});
+```
+
+### Test Utilities
+```tsx
+// Good Example - src/test/testUtils.tsx
+import React, { ReactElement } from 'react';
+import { render, RenderOptions } from '@testing-library/react';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+
+// Define a custom render method that includes providers
+const AllTheProviders = ({ children }) => {
+  return (
+    <AuthProvider>
+      <CartProvider>
+        {children}
+      </CartProvider>
+    </AuthProvider>
+  );
+};
+
+const customRender = (
+  ui: ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) => render(ui, { wrapper: AllTheProviders, ...options });
+
+// Re-export everything
+export * from '@testing-library/react';
+export { customRender as render };
+```
+
+## End-to-End Testing
+
+### Cypress Tests
+```tsx
+// Good Example - cypress/integration/order.spec.js
+describe('Doctor Order Workflow', () => {
+  beforeEach(() => {
+    // Mock authentication
+    cy.intercept('POST', '/api/auth/login', {
+      body: {
+        token: 'fake-token',
+        user: { id: 'doctor1', name: 'Dr. Smith', role: 'doctor' }
+      }
+    }).as('login');
+    
+    // Mock SKU search
+    cy.intercept('GET', '/api/skus*', {
+      body: [
+        { id: 'sku1', chineseName: '人参', englishName: 'Ginseng', pinyinName: 'renshen', pricePerGram: 2.5 },
+        { id: 'sku2', chineseName: '西洋参', englishName: 'American Ginseng', pinyinName: 'xiyangsen', pricePerGram: 3.2 }
+      ]
+    }).as('searchSKUs');
+    
+    // Mock order creation
+    cy.intercept('POST', '/api/orders', {
+      body: { id: 'order123', status: 'success', qrCode: 'data:image/png;base64,abc123' }
+    }).as('createOrder');
+    
+    // Visit the homepage
+    cy.visit('/');
+  });
+  
+  it('allows a doctor to create a prescription', () => {
+    // Login
+    cy.contains('Login').click();
+    cy.get('input[name="email"]').type('doctor@example.com');
+    cy.get('input[name="password"]').type('Doctor123');
+    cy.contains('button', 'Log In').click();
+    cy.wait('@login');
+    
+    // Search for SKUs
+    cy.get('input[placeholder*="Search"]').type('ginseng');
+    cy.wait('@searchSKUs');
+    cy.contains('Ginseng').click();
+    
+    // Add to cart
+    cy.get('input[type="number"]').type('2');
+    cy.contains('button', 'Add').click();
+    
+    // Search for another SKU
+    cy.get('input[placeholder*="Search"]').clear().type('american');
+    cy.wait('@searchSKUs');
+    cy.contains('American Ginseng').click();
+    
+    // Add to cart
+    cy.get('input[type="number"]').type('1');
+    cy.contains('button', 'Add').click();
+    
+    // Confirm order
+    cy.contains('button', 'Confirm Order').click();
+    
+    // Set prescription fee
+    cy.get('input[aria-label="Prescription Fee"]').clear().type('15');
+    cy.contains('button', 'Proceed').click();
+    
+    // Wait for order processing
+    cy.wait('@createOrder');
+    
+    // Verify success
+    cy.contains('Order Placed Successfully');
+    cy.contains('Print / Download').should('be.visible');
+    cy.contains('QR Code').should('be.visible');
+  });
+});
+```
+
+## Code Coverage
+
+### Istanbul Configuration
+```json
+// Good Example - jest.config.js
+{
+  "collectCoverage": true,
+  "collectCoverageFrom": [
+    "src/**/*.{js,jsx,ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/mocks/**",
+    "!src/types/**",
+    "!src/**/index.{js,jsx,ts,tsx}",
+    "!src/**/*.stories.{js,jsx,ts,tsx}"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    }
+  }
+}
+```
+```
+
+These consolidated rules documents are properly formatted for Cursor editor with descriptions and globs patterns. I've avoided full-width Chinese punctuation and used English throughout. The rules are now organized into three major categories:
+
+1. Core project rules and standards
+2. React and Next.js specific development standards
+3. Testing and quality assurance standards
+
+
+
+
+
+
+Each document has the proper description and globs fields that should help Cursor correctly reference these rules when working on the appropriate files.

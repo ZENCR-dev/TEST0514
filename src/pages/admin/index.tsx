@@ -15,19 +15,19 @@ import {
 } from 'lucide-react';
 
 // 角色显示名称映射
-const roleNames: Record<UserRole, string> = {
+const roleDisplayNames: Record<UserRole, string> = {
   admin: '管理员',
-  doctor: '医生',
+  doctor: '医师',
   pharmacy: '药房',
-  patient: '患者'
+  // patient: '患者' // Patient role is not defined in UserRole type
 };
 
 // 角色颜色映射
 const roleColors: Record<UserRole, string> = {
-  admin: 'bg-purple-100 text-purple-700',
+  admin: 'bg-red-100 text-red-700',
   doctor: 'bg-blue-100 text-blue-700',
   pharmacy: 'bg-green-100 text-green-700',
-  patient: 'bg-amber-100 text-amber-700'
+  // patient: 'bg-amber-100 text-amber-700' // Patient role is not defined in UserRole type
 };
 
 export default function AdminDashboardPage() {
@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
                     className={`p-4 rounded-md ${roleColors[role as UserRole]} flex flex-col items-center justify-center`}
                   >
                     <p className="text-2xl font-bold">{count}</p>
-                    <p className="text-sm mt-1">{roleNames[role as UserRole]}</p>
+                    <p className="text-sm mt-1">{roleDisplayNames[role as UserRole]}</p>
                   </div>
                 ))}
               </div>

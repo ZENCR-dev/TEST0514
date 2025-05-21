@@ -135,7 +135,7 @@ export async function createPharmacyAccount(data: PharmacyCreateData): Promise<E
     createdAt: new Date().toISOString(),
     phone: data.phone,
     address: data.address,
-    lastLogin: null
+    lastLogin: undefined
   };
   
   // 模拟保存到数据库
@@ -179,8 +179,8 @@ export async function registerDoctorAccount(data: DoctorRegisterData): Promise<E
     phone: data.phone,
     address: data.address,
     hpiNumber: data.hpiNumber,
-    apcCertificate: data.apcCertificate ? 'uploaded' : null, // 在实际实现中，这里会存储文件URL
-    lastLogin: null
+    apcCertificate: data.apcCertificate ? 'uploaded' : undefined, // Changed from null
+    lastLogin: undefined
   };
   
   // 模拟保存到数据库
@@ -224,8 +224,8 @@ export async function createDoctorAccount(data: DoctorRegisterData): Promise<Ext
     phone: data.phone,
     address: data.address,
     hpiNumber: data.hpiNumber,
-    apcCertificate: data.apcCertificate ? 'uploaded' : null,
-    lastLogin: null
+    apcCertificate: data.apcCertificate ? 'uploaded' : undefined, // Changed from null
+    lastLogin: undefined
   };
   
   // 模拟保存到数据库

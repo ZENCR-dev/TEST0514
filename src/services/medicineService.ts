@@ -338,7 +338,8 @@ export async function bulkUpdateStock(
         throw new Error(`中药ID "${update.id}" 不存在`);
       }
       
-      const currentStock = allMedicines[index].stock;
+      // 检查药品是否有库存字段，并且是否为数字，否则默认为0
+      const currentStock = typeof allMedicines[index].stock === 'number' ? allMedicines[index].stock : 0;
       const newStock = currentStock + update.stockChange;
       
       // 确保库存不为负

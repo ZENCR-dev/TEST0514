@@ -1,0 +1,434 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Testing standards for ensuring code quality in the TCM Prescription Platform
+globs: **/*.{test,spec}.{js,jsx,ts,tsx}
+---
+# Code Quality Guidelines
+
+## Verify Information
+Always verify information before presenting it. Do not make assumptions or speculate without clear evidence.
+
+## File-by-File Changes
+Make changes file by file and give me a chance to spot mistakes.
+
+## No Apologies
+Never use apologies.
+
+## No Understanding Feedback
+Avoid giving feedback about understanding in comments or documentation.
+
+## No Whitespace Suggestions
+Don't suggest whitespace changes.
+
+## No Summaries
+Don't summarize changes made.
+
+## No Inventions
+Don't invent changes other than what's explicitly requested.
+
+## No Unnecessary Confirmations
+Don't ask for confirmation of information already provided in the context.
+
+## Preserve Existing Code
+Don't remove unrelated code or functionalities. Pay attention to preserving existing structures.
+
+## Single Chunk Edits
+Provide all edits in a single chunk instead of multiple-step instructions or explanations for the same file.
+
+## No Implementation Checks
+Don't ask the user to verify implementations that are visible in the provided context.
+
+## No Unnecessary Updates
+Don't suggest updates or changes to files when there are no actual modifications needed.
+
+## Provide Real File Links
+Always provide links to the real files, not x.md.
+
+## No Current Implementation
+Don't show or discuss the current implementation unless specifically requested.
+
+
+# Testing Standards
+
+## Unit Testing
+
+### Component Tests
+```tsx
+// Good Example
+import { render, screen, fireEvent } from '@testing-library/react';
+import { SKUSearchBar } from './SKUSearchBar';
+
+describe('SKUSearchBar', () => {
+  const mockOnSearch = jest.fn();
+  
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('renders search input correctly', () => {
+    render(<SKUSearchBar onSearch={mockOnSearch} />);
+    expect(screen.getByPlaceholderText('Search SKUs...')).toBeInTheDocument();
+  });
+  
+  it('calls onSearch prop when form is submitted', () => {
+    render(<SKUSearchBar onSearch={mockOnSearch} />);
+    const input = screen.getByPlaceholderText('Search SKUs...');
+    const searchTerm = 'ginseng';
+    
+    fireEvent.change(input, { target: { value: searchTerm } });
+    fireEvent.submit(screen.getByRole('form'));
+    
+    expect(mockOnSearch).toHaveBeenCalledWith(searchTerm);
+  });
+  
+  it('disables the submit button when input is empty', () => {
+    render(<SKUSearchBar onSearch={mockOnSearch} />);
+    const button = screen.getByRole('button', { name: /search/i });
+    
+    expect(button).toBeDisabled();
+    
+    fireEvent.change(screen.getByPlaceholderText('Search SKUs...'), {
+      target: { value: 'test' }
+    });
+    
+    expect(button).not.toBeDisabled();
+  });
+});
+```
+
+### Hook Tests
+```tsx
+// Good Example
+import { renderHook, act } from '@testing-library/react';
+import { useSkuSearch } from './useSkuSearch';
+import { searchSkus } from '@/services/skuService';
+
+// Mock the service
+jest.mock('@/services/skuService', () => ({
+  searchSkus: jest.fn()
+}));
+
+describe('useSkuSearch', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('returns empty results when query is empty', async () => {
+    const { result } = renderHook(() => useSkuSearch());
+    
+    expect(result.current.results).toEqual([]);
+    expect(result.current.loading).toBe(false);
+    expect(searchSkus).not.toHaveBeenCalled();
+  });
+  
+  it('fetches results when query changes', async () => {
+    const mockResults = [{ id: '1', name: 'Ginseng' }];
+    (searchSkus as jest.Mock).mockResolvedValue(mockResults);
+    
+    const { result, waitForNextUpdate } = renderHook(() => useSkuSearch());
+    
+    act(() => {
+      result.current.setQuery('ginseng');
+    });
+    
+    expect(result.current.loading).toBe(true);
+    
+    await waitForNextUpdate();
+    
+    expect(searchSkus).toHaveBeenCalledWith('ginseng');
+    expect(result.current.results).toEqual(mockResults);
+    expect(result.current.loading).toBe(false);
+  });
+  
+  it('handles search errors', async () => {
+    const error = new Error('Failed to fetch');
+    (searchSkus as jest.Mock).mockRejectedValue(error);
+    
+    const { result, waitForNextUpdate } = renderHook(() => useSkuSearch());
+    
+    act(() => {
+      result.current.setQuery('invalid');
+    });
+    
+    await waitForNextUpdate();
+    
+    expect(result.current.error).toEqual(error);
+    expect(result.current.loading).toBe(false);
+  });
+});
+```
+
+## Integration Testing
+
+### User Flow Tests
+```tsx
+// Good Example
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { OrderPage } from './OrderPage';
+import { createOrder } from '@/services/orderService';
+
+jest.mock('@/services/orderService');
+
+describe('Order Workflow', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+  
+  it('completes the order process successfully', async () => {
+    // Mock successful order creation
+    const mockOrderResult = { id: 'order123', status: 'success' };
+    (createOrder as jest.Mock).mockResolvedValue(mockOrderResult);
+    
+    // Render the page with necessary providers
+    render(
+      <AuthProvider initialUser={{ id: 'user1', role: 'doctor' }}>
+        <CartProvider initialItems={[{ sku: { id: 'sku1', name: 'Ginseng' }, quantity: 2 }]}>
+          <OrderPage />
+        </CartProvider>
+      </AuthProvider>
+    );
+    
+    // Verify cart items are displayed
+    expect(screen.getByText('Ginseng')).toBeInTheDocument();
+    expect(screen.getByText('Qty: 2')).toBeInTheDocument();
+    
+    // Click confirm order
+    fireEvent.click(screen.getByText('Confirm Order'));
+    
+    // Fill in prescription details in modal
+    await waitFor(() => {
+      expect(screen.getByText('Order Confirmation')).toBeInTheDocument();
+    });
+    
+    fireEvent.change(screen.getByLabelText('Prescription Fee'), {
+      target: { value: '10' }
+    });
+    
+    fireEvent.click(screen.getByText('Proceed'));
+    
+    // Wait for order processing
+    await waitFor(() => {
+      expect(screen.getByText('Processing')).toBeInTheDocument();
+    });
+    
+    // Verify success state
+    await waitFor(() => {
+      expect(screen.getByText('Order Placed Successfully')).toBeInTheDocument();
+      expect(screen.getByText('Order #: order123')).toBeInTheDocument();
+    });
+    
+    // Verify order service was called correctly
+    expect(createOrder).toHaveBeenCalledWith({
+      items: [{ skuId: 'sku1', quantity: 2 }],
+      prescriptionFee: 10,
+      orderMultiplier: 1 // Default value
+    });
+  });
+  
+  it('displays error message when order creation fails', async () => {
+    // Mock failed order creation
+    (createOrder as jest.Mock).mockRejectedValue(new Error('Network error'));
+    
+    // Render the page with necessary providers
+    render(
+      <AuthProvider initialUser={{ id: 'user1', role: 'doctor' }}>
+        <CartProvider initialItems={[{ sku: { id: 'sku1', name: 'Ginseng' }, quantity: 2 }]}>
+          <OrderPage />
+        </CartProvider>
+      </AuthProvider>
+    );
+    
+    // Click confirm order
+    fireEvent.click(screen.getByText('Confirm Order'));
+    
+    // Fill in prescription details in modal
+    await waitFor(() => {
+      expect(screen.getByText('Order Confirmation')).toBeInTheDocument();
+    });
+    
+    fireEvent.click(screen.getByText('Proceed'));
+    
+    // Verify error state
+    await waitFor(() => {
+      expect(screen.getByText('Failed to create order')).toBeInTheDocument();
+      expect(screen.getByText('Network error')).toBeInTheDocument();
+    });
+  });
+});
+```
+
+## Test Organization
+
+### Mock Data
+```tsx
+// Good Example - src/mocks/skuData.ts
+import { SKU } from '@/types';
+
+export const mockSKUs: SKU[] = [
+  {
+    id: 'sku_001',
+    chineseName: '人参',
+    englishName: 'Ginseng',
+    pinyinName: 'renshen',
+    pricePerGram: 2.5
+  },
+  {
+    id: 'sku_002',
+    chineseName: '西洋参',
+    englishName: 'American Ginseng',
+    pinyinName: 'xiyangsen',
+    pricePerGram: 3.2
+  },
+  // More mock SKUs...
+];
+
+export const createMockSKU = (overrides = {}): SKU => ({
+  id: `sku_${Math.random().toString(36).substring(2, 7)}`,
+  chineseName: '测试',
+  englishName: 'Test SKU',
+  pinyinName: 'ceshi',
+  pricePerGram: 1.0,
+  ...overrides
+});
+```
+
+### Test Utilities
+```tsx
+// Good Example - src/test/testUtils.tsx
+import React, { ReactElement } from 'react';
+import { render, RenderOptions } from '@testing-library/react';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+
+// Define a custom render method that includes providers
+const AllTheProviders = ({ children }) => {
+  return (
+    <AuthProvider>
+      <CartProvider>
+        {children}
+      </CartProvider>
+    </AuthProvider>
+  );
+};
+
+const customRender = (
+  ui: ReactElement,
+  options?: Omit<RenderOptions, 'wrapper'>
+) => render(ui, { wrapper: AllTheProviders, ...options });
+
+// Re-export everything
+export * from '@testing-library/react';
+export { customRender as render };
+```
+
+## End-to-End Testing
+
+### Cypress Tests
+```tsx
+// Good Example - cypress/integration/order.spec.js
+describe('Doctor Order Workflow', () => {
+  beforeEach(() => {
+    // Mock authentication
+    cy.intercept('POST', '/api/auth/login', {
+      body: {
+        token: 'fake-token',
+        user: { id: 'doctor1', name: 'Dr. Smith', role: 'doctor' }
+      }
+    }).as('login');
+    
+    // Mock SKU search
+    cy.intercept('GET', '/api/skus*', {
+      body: [
+        { id: 'sku1', chineseName: '人参', englishName: 'Ginseng', pinyinName: 'renshen', pricePerGram: 2.5 },
+        { id: 'sku2', chineseName: '西洋参', englishName: 'American Ginseng', pinyinName: 'xiyangsen', pricePerGram: 3.2 }
+      ]
+    }).as('searchSKUs');
+    
+    // Mock order creation
+    cy.intercept('POST', '/api/orders', {
+      body: { id: 'order123', status: 'success', qrCode: 'data:image/png;base64,abc123' }
+    }).as('createOrder');
+    
+    // Visit the homepage
+    cy.visit('/');
+  });
+  
+  it('allows a doctor to create a prescription', () => {
+    // Login
+    cy.contains('Login').click();
+    cy.get('input[name="email"]').type('doctor@example.com');
+    cy.get('input[name="password"]').type('Doctor123');
+    cy.contains('button', 'Log In').click();
+    cy.wait('@login');
+    
+    // Search for SKUs
+    cy.get('input[placeholder*="Search"]').type('ginseng');
+    cy.wait('@searchSKUs');
+    cy.contains('Ginseng').click();
+    
+    // Add to cart
+    cy.get('input[type="number"]').type('2');
+    cy.contains('button', 'Add').click();
+    
+    // Search for another SKU
+    cy.get('input[placeholder*="Search"]').clear().type('american');
+    cy.wait('@searchSKUs');
+    cy.contains('American Ginseng').click();
+    
+    // Add to cart
+    cy.get('input[type="number"]').type('1');
+    cy.contains('button', 'Add').click();
+    
+    // Confirm order
+    cy.contains('button', 'Confirm Order').click();
+    
+    // Set prescription fee
+    cy.get('input[aria-label="Prescription Fee"]').clear().type('15');
+    cy.contains('button', 'Proceed').click();
+    
+    // Wait for order processing
+    cy.wait('@createOrder');
+    
+    // Verify success
+    cy.contains('Order Placed Successfully');
+    cy.contains('Print / Download').should('be.visible');
+    cy.contains('QR Code').should('be.visible');
+  });
+});
+```
+
+## Code Coverage
+
+### Istanbul Configuration
+```json
+// Good Example - jest.config.js
+{
+  "collectCoverage": true,
+  "collectCoverageFrom": [
+    "src/**/*.{js,jsx,ts,tsx}",
+    "!src/**/*.d.ts",
+    "!src/mocks/**",
+    "!src/types/**",
+    "!src/**/index.{js,jsx,ts,tsx}",
+    "!src/**/*.stories.{js,jsx,ts,tsx}"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    }
+  }
+}
+
+
+
+
+```

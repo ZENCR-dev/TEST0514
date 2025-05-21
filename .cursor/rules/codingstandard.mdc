@@ -1,0 +1,83 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: TCM处方平台编码标准
+globs: **/*.{ts,tsx,js,jsx}
+---
+
+# 编码标准
+
+## TypeScript规范
+
+### 类型定义
+- 为所有变量、参数和返回值提供明确的类型
+- 使用interface定义对象结构
+- 使用type定义联合类型或交叉类型
+- 避免使用any，优先使用unknown和泛型
+
+### 类型文件
+- 共享类型定义放在types/目录
+- 模块特定类型可以放在相关文件中
+- 导出所有公共类型
+
+## React最佳实践
+
+### 函数组件
+- 使用函数组件和React Hooks
+- 组件名使用PascalCase
+- Props类型使用ComponentNameProps命名
+- 提供有意义的默认值
+
+### Props处理
+- 使用解构获取props
+- 对可选props提供默认值
+- 避免过度传递props(（)prop drilling）
+
+### Hooks使用
+- 遵循Hooks规则（顶层调用，仅在React函数中使用）
+- 自定义Hooks命名以use开头
+- 关注Hook依赖数组的正确性
+
+### 性能优化
+- 使用React.memo避免不必要的重渲染
+- 使用useCallback和useMemo优化性能
+- 实现虚拟列表处理大数据集
+
+## 代码组织
+
+### 组件结构
+- 每个组件一个文件
+- 复杂组件使用子组件拆分
+- 导出默认组件和命名子组件
+
+### 状态逻辑
+- 使用自定义Hooks抽取复杂逻辑
+- 相关状态逻辑保持在同一文件或目录
+- 共享状态放在store/目录
+
+### 工具函数
+- 纯函数放在utils/目录
+- 文件名应反映功能（例如dateUtils.ts）
+- 导出多个相关函数
+
+## 样式规范
+
+### Tailwind使用
+- 优先使用Tailwind原子类
+- 对重复样式使用@apply创建自定义类
+- 保持类名排序一致（布局>尺寸>颜色>其他）
+
+### 主题定义
+- 颜色在tailwind.config.js中定义
+- 使用CSS变量处理主题切换
+- 避免硬编码颜色值
+
+### 响应式设计
+- 移动优先，使用min-width媒体查询
+- 使用Tailwind断点系统
+
+
+- 测试所有关键视图在各种屏幕尺寸的表现
