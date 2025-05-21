@@ -1,0 +1,27 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+## 任务进度跟踪
+
+| 阶段 | 任务 | 状态 | 完成日期 | 备注 |
+|---|---|---|----|---|
+| 0 | 0.1: 初始化Git仓库并推送代码 | 完成 |  | 代码已推送至GitHub main分支 (hash: a63ecfa)，CI通过。 |
+| 0 | 0.2: 在Vercel上创建并配置项目 | 完成 |  | Vercel已部署，访问地址: https://test-0514v05.vercel.app/。各主要模块交互正常。 |
+| A | A1: 集成QR码扫描库 | 完成 | CURRENT_DATE | html5-qrcode 已安装并验证导入成功。 |
+| A | A2: 创建相机扫描组件结构 | 完成 | CURRENT_DATE | QrScanner.tsx 组件创建并包含基础结构和导出。 |
+| A | A3: 实现摄像头访问 | 完成 | CURRENT_DATE | QrScanner.tsx 中已集成摄像头访问、扫描器初始化和清理逻辑。 |
+| A | A4: Vercel预览部署测试(摄像头访问) | 完成 | CURRENT_DATE | 本地及Vercel部署后摄像头访问、扫描及错误处理符合预期。 |
+| A | A5: 集成扫描库到视频流 | 未开始 | | |
+| A | A6: 处理扫描成功 | 未开始 | | |
+## Vercel部署检查清单
+
+- [x] GitHub仓库创建完成 (https://github.com/ZENCR-dev/TEST0514)
+- [x] 代码已推送到GitHub
+- [x] Vercel账户已创建
+- [x] Vercel已连接GitHub仓库
+- [x] 基本环境变量已设置
+- [x] 构建命令已确认
+- [x] 输出目录已确认
+- [x] 部署域名已确认
