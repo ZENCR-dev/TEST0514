@@ -56,11 +56,16 @@ const textMap = {
   }
 };
 
+// 定义按钮名称的联合类型
+export type AllowedButtonNames = keyof typeof textMap.buttonNames;
+// 定义操作描述的联合类型
+export type AllowedActionDescriptions = keyof typeof textMap.actionDescriptions;
+
 interface SimulatedActionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  buttonName: string; // 例如："打印处方单"
-  actionDescription: string; // 例如："打开打印对话框"
+  buttonName: AllowedButtonNames; // 使用更精确的类型
+  actionDescription: AllowedActionDescriptions; // 使用更精确的类型
   language?: "cn" | "en"; // 默认使用中文
   className?: string;
 }
@@ -108,22 +113,23 @@ export const SimulatedActionModal: React.FC<SimulatedActionModalProps> = ({
   }, [isOpen]);
 
   // 获取本地化的按钮名称
-  const getLocalizedButtonName = (name: string, lang: "cn" | "en"): string => {
+  const getLocalizedButtonName = (name: AllowedButtonNames, lang: "cn" | "en"): string => {
     // 检查是否有针对这个按钮名称的映射
-    if (textMap.buttonNames[name]) {
+    // TypeScript 现在知道 'name' 必须是 textMap.buttonNames 中的一个键
+    if (textMap.buttonNames[name]) { 
       return textMap.buttonNames[name][lang];
     }
-    // 如果没有映射，返回原始名称
-    return name;
+    // 理论上这行不会执行，因为 name 的类型已经保证了它在映射中
+    // 但为了以防万一或未来扩展，可以保留
+    return name; 
   };
 
   // 获取本地化的操作描述
-  const getLocalizedActionDescription = (desc: string, lang: "cn" | "en"): string => {
-    // 检查是否有针对这个操作描述的映射
+  const getLocalizedActionDescription = (desc: AllowedActionDescriptions, lang: "cn" | "en"): string => {
+    // TypeScript 现在知道 'desc' 必须是 textMap.actionDescriptions 中的一个键
     if (textMap.actionDescriptions[desc]) {
       return textMap.actionDescriptions[desc][lang];
     }
-    // 如果没有映射，返回原始描述
     return desc;
   };
 
