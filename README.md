@@ -33,3 +33,11 @@ npm run dev
 
 - 修复了Medicine类型定义，确保包含所有需要的字段
 - 优化了组件渲染逻辑，提高代码健壮性 
+
+## ESLint Configuration
+
+Currently, this project uses ESLint v8 with an `.eslintrc.json` configuration file.
+
+**Future Plans:** We plan to migrate to ESLint v9 and its Flat Config system (`eslint.config.js`) once the project is upgraded to Next.js version 15 or later, as Next.js 15 provides better official support for ESLint v9.
+
+## Available Scripts 
