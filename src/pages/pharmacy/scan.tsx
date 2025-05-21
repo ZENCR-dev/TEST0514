@@ -29,37 +29,48 @@ function ScanPage() {
   };
 
   const handleScanError = (errorMessage: any) => {
-    // console.error("Scan error object:", errorMessage); // Log the full error object for deeper inspection
+    // console.error("[DEBUG] Full error object:", errorMessage);
+    // console.log("[DEBUG] Type of error:", typeof errorMessage);
 
-    // More specific check for the NotFoundException from html5-qrcode
-    if (typeof errorMessage === 'string' && errorMessage.includes('NotFoundException')) {
-      // This error can be frequent if no QR code is in view. Log it but don't show a disruptive UI error.
-      console.warn("QR code not found in current frame. Scanner is still active.");
-      // Optionally, you could set a very subtle UI hint that it's actively scanning but not finding anything yet.
-      // For now, we will not set a major error state for this specific, common case.
+    let errorStringToTest = '';
+    if (typeof errorMessage === 'string') {
+      errorStringToTest = errorMessage;
+    } else if (errorMessage && typeof errorMessage.message === 'string') {
+      // Sometimes the actual message is within an error object
+      errorStringToTest = errorMessage.message;
+    }
+
+    // Check for errors indicating no QR code was found in the frame, or scanner is actively trying
+    if (errorStringToTest.includes('NotFoundException') || 
+        errorStringToTest.includes('No MultiFormat Readers were able to detect the code')) {
+      console.warn(`[SCANNER] QR code not found in current frame or a parse error occurred for the frame. Scanner is still active. Message: ${errorStringToTest}`);
+      // Do not set a disruptive UI error for this case, as the scanner should continue.
       return; 
     }
 
-    console.error("Scan error reported to user:", errorMessage);
+    // Log other errors more verbosely for debugging, then set a user-friendly message.
+    console.error("[SCANNER] A more critical scan error occurred:", errorMessage);
     let displayError = "扫描失败，请重试。";
 
-    if (typeof errorMessage === 'string') {
-      if (errorMessage.toLowerCase().includes('notallowederror')) {
-        displayError = "无法访问摄像头。请检查浏览器权限设置并允许访问摄像头。确保通过HTTPS访问页面。";
-      } else {
-        // displayError = `扫描错误: ${errorMessage}`; // Avoid showing raw technical error strings directly
-        console.warn(`Raw error message string: ${errorMessage}`);
-      }
-    } else if (errorMessage && (errorMessage.name === 'NotAllowedError' || errorMessage.message?.toLowerCase().includes('permission denied'))) {
+    // Handle specific, critical errors like permission denial
+    const lowerErrorString = errorStringToTest.toLowerCase();
+    if (lowerErrorString.includes('notallowederror') || 
+        lowerErrorString.includes('permission denied') || 
+        (errorMessage && errorMessage.name === 'NotAllowedError')) {
       displayError = "无法访问摄像头。请检查浏览器权限设置并允许访问摄像头。确保通过HTTPS访问页面。";
-    } else if (errorMessage && typeof errorMessage.message === 'string') {
-      // displayError = `扫描错误: ${errorMessage.message}`;
-      console.warn(`Error object message: ${errorMessage.message}`);
+      // Optionally, hide the scanner UI if permission is definitively denied
+      // setShowScanner(false);
+    } else if (errorMessage && errorMessage.name === 'NotFoundError') {
+        displayError = "未找到可用的摄像头设备。";
+        // setShowScanner(false);
+    } else if (errorMessage && errorMessage.name === 'NotReadableError') {
+        displayError = "摄像头当前无法访问，可能已被其他应用占用或存在硬件问题。";
+        // setShowScanner(false);
     }
+    // Add more specific error.name checks if needed: AbortError, OverconstrainedError, SecurityError, TypeError
     
     setScanError(displayError);
     setScannedData(null);
-    // setShowScanner(false); // Consider if scanner should be hidden on other errors too
   };
 
   return (
