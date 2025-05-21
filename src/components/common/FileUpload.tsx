@@ -41,7 +41,7 @@ export function FileUpload({
     const validation = validateFile(file);
     
     if (!validation.valid) {
-      setFileError(validation.error);
+      setFileError(validation.error ?? null);
       setSelectedFile(null);
       onFileSelect(null);
       return;
