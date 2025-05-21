@@ -37,4 +37,4 @@ Thumbs.db
 # 特定项目文件
 /tcm-prescription-platform/
 /backup/
-package-lock.json
+# package-lock.json # 确保package-lock.json被提交以保证构建一致性
