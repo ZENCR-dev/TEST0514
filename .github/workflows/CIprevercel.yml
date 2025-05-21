@@ -24,6 +24,18 @@ jobs:
       - name: Install dependencies
         run: npm ci # 使用 npm ci 来确保一致和快速的依赖安装
 
+      - name: Display Git Commit SHA
+        run: |
+          echo "Current Commit SHA: $(git rev-parse HEAD)"
+
+      - name: Display package.json lint script
+        run: |
+          echo "Lint script: $(node -pe \"require('./package.json').scripts.lint\")"
+      
+      - name: Display .eslintrc.json content
+        run: |
+          cat .eslintrc.json || echo ".eslintrc.json not found or cat failed"
+
       - name: Run ESLint
         run: npm run lint
 
