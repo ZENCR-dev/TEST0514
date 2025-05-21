@@ -16,7 +16,7 @@ export function PrescriptionInstructions({
     if (e.key === 'Tab' && !e.shiftKey) {
       // 如果输入框为空，并且按下了Tab键，则填充placeholder内容
       if (!value && placeholder) {
-        e.preventDefault();
+      e.preventDefault();
         onChange(placeholder);
       }
       // 如果输入框非空，Tab键则执行默认行为（通常是切换焦点）
