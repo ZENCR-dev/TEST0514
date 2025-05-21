@@ -39,8 +39,6 @@ jobs:
           cat .eslintrc.json || echo ".eslintrc.json not found or cat failed"
 
       - name: Run ESLint
-        env:
-          ESLINT_USE_FLAT_CONFIG: "false"
         run: npm run lint
 
       - name: Run Build
