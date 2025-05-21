@@ -35,7 +35,7 @@ export function withAuth<P extends object>(
           router.replace(redirectTo);
         }
       }
-    }, [isAuthenticated, user, router, redirectTo]);
+    }, [isAuthenticated, user, router, hasRole]);
     
     // 等待认证状态加载完成或未认证时不渲染内容
     if (!isAuthenticated) {

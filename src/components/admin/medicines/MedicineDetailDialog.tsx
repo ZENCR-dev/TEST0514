@@ -2,6 +2,7 @@
  * 中药详情对话框组件
  */
 import React from 'react';
+import Image from 'next/image';
 import { 
   Dialog,
   DialogContent,
@@ -101,13 +102,15 @@ export function MedicineDetailDialog({
             {medicine.imageUrl && (
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">药材图片</h3>
-                <div className="h-48 bg-gray-100 rounded-md overflow-hidden">
-                  <img 
+                <div className="relative h-48 w-full bg-gray-100 rounded-md overflow-hidden">
+                  <Image 
                     src={medicine.imageUrl} 
                     alt={medicine.chineseName}
-                    className="w-full h-full object-cover"
+                    layout="fill"
+                    objectFit="cover"
                     onError={(e) => {
                       // 图片加载失败时显示占位符
+                      (e.target as HTMLImageElement).srcset = 'https://via.placeholder.com/200x150?text=图片加载失败';
                       (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200x150?text=图片加载失败';
                     }}
                   />

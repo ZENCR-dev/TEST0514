@@ -36,7 +36,7 @@ export function MedicineFilters({ filters, onChange }: MedicineFiltersProps) {
   // 当搜索值改变时触发防抖搜索
   useEffect(() => {
     debouncedSearch(searchValue);
-  }, [searchValue]);
+  }, [searchValue, debouncedSearch]);
   
   // 处理分类变更
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

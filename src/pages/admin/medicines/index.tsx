@@ -1,7 +1,7 @@
 /**
  * 中药管理页面
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '@/components/ui/button';
 import { MedicineList } from '@/components/admin/medicines/MedicineList';
@@ -42,7 +42,7 @@ export default function MedicinesPage() {
   const [priceAdjustDialogOpen, setPriceAdjustDialogOpen] = useState(false);
   
   // 加载数据
-  const loadMedicines = async () => {
+  const loadMedicines = useCallback(async () => {
     setLoading(true);
     try {
       const result = await getAllMedicines({
@@ -58,12 +58,12 @@ export default function MedicinesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, currentPage, itemsPerPage, setLoading, setMedicines, setTotalItems]);
   
   // 初始加载和依赖项变更时加载数据
   useEffect(() => {
     loadMedicines();
-  }, [currentPage, itemsPerPage, filters]);
+  }, [loadMedicines]); // currentPage, itemsPerPage, filters 已经是 loadMedicines 的依赖
   
   // 处理筛选变更
   const handleFilterChange = (newFilters: MedicineFilterOptions) => {

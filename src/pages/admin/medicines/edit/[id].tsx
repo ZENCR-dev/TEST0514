@@ -1,7 +1,7 @@
 /**
  * 编辑中药页面
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { Button } from '@/components/ui/button';
 import { MedicineForm } from '@/components/admin/medicines/MedicineForm';
@@ -17,15 +17,8 @@ export default function EditMedicinePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 加载中药数据
-  useEffect(() => {
-    if (id) {
-      loadMedicine(id as string);
-    }
-  }, [id]);
-
   // 获取中药详情
-  const loadMedicine = async (medicineId: string) => {
+  const loadMedicine = useCallback(async (medicineId: string) => {
     setIsLoading(true);
     try {
       const data = await getMedicineById(medicineId);
@@ -40,7 +33,14 @@ export default function EditMedicinePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router, setIsLoading, setMedicine, setError]);
+
+  // 加载中药数据
+  useEffect(() => {
+    if (id) {
+      loadMedicine(id as string);
+    }
+  }, [id, loadMedicine]);
 
   // 处理表单提交
   const handleSubmit = async (data: any) => {

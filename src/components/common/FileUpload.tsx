@@ -100,11 +100,14 @@ export function FileUpload({
     
     if (selectedFile.type.startsWith('image/')) {
       return { 
-        icon: <img 
-          src={URL.createObjectURL(selectedFile)} 
-          alt="Preview" 
-          className="w-8 h-8 object-cover rounded" 
-        />,
+        icon: (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img 
+            src={URL.createObjectURL(selectedFile)} 
+            alt="Preview" 
+            className="w-8 h-8 object-cover rounded" 
+          />
+        ),
         text: '图片'
       };
     }
