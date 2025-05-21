@@ -56,23 +56,29 @@ export function MedicineDetailDialog({
               <div className="text-sm">{formatPrice(medicine.pricePerGram)}/克</div>
               
               <div className="text-sm text-gray-500">库存：</div>
-              <div className="text-sm">{medicine.stock} 克</div>
+              <div className="text-sm">{medicine.stock ?? '-'} {medicine.stock ? '克' : ''}</div>
               
               <div className="text-sm text-gray-500">药性：</div>
-              <div className="text-sm">{medicine.properties || '-'}</div>
+              <div className="text-sm">{medicine.properties || medicine.property || '-'}</div>
               
               <div className="text-sm text-gray-500">分类：</div>
               <div className="text-sm">{medicine.category || '-'}</div>
               
               <div className="text-sm text-gray-500">状态：</div>
               <div className="text-sm">
-                {medicine.isActive ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    已启用
-                  </span>
+                {medicine.isActive !== undefined ? (
+                  medicine.isActive ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      已启用
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      已禁用
+                    </span>
+                  )
                 ) : (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    已禁用
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    未知
                   </span>
                 )}
               </div>
@@ -83,10 +89,10 @@ export function MedicineDetailDialog({
             <h3 className="text-sm font-medium text-gray-500">其他信息</h3>
             <div className="grid grid-cols-2 gap-2">
               <div className="text-sm text-gray-500">创建时间：</div>
-              <div className="text-sm">{formatDate(medicine.createdAt)}</div>
+              <div className="text-sm">{medicine.createdAt ? formatDate(medicine.createdAt) : '-'}</div>
               
               <div className="text-sm text-gray-500">更新时间：</div>
-              <div className="text-sm">{formatDate(medicine.updatedAt)}</div>
+              <div className="text-sm">{medicine.updatedAt ? formatDate(medicine.updatedAt) : '-'}</div>
               
               <div className="text-sm text-gray-500">ID：</div>
               <div className="text-sm text-gray-400">{medicine.id}</div>

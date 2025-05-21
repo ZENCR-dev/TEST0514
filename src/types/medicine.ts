@@ -50,6 +50,15 @@ export interface Medicine {
   pricePerGram: number; // 零售价（元/克）
   category?: string;    // 分类（可选）
   property?: string;    // 药性（可选）
+  
+  // 新增字段
+  stock?: number;        // 库存量（克）
+  properties?: string;   // 药性（与property字段兼容）
+  description?: string;  // 药品描述
+  imageUrl?: string;     // 药品图片URL
+  isActive?: boolean;    // 是否启用
+  createdAt?: string;    // 创建时间
+  updatedAt?: string;    // 更新时间
 }
 
 /**
