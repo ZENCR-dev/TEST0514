@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NextPage } from 'next';
-import { MedicineSearch } from '@/components/prescription/MedicineSearch';
+import MedicineSearch from '@/components/prescription/MedicineSearch';
 import { MedicineList } from '@/components/prescription/MedicineList';
 import { QuantityInput } from '@/components/prescription/QuantityInput';
 import { PrescriptionActions } from '@/components/prescription/PrescriptionActions';

@@ -1,3 +1,8 @@
+---
+description: 上传Git前的本地自检流程
+globs: 
+alwaysApply: false
+---
 # 本地代码库自检流程 (提交前执行)
 
 ## 目的

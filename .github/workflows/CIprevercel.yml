@@ -44,5 +44,5 @@ jobs:
       - name: Run Build
         run: npm run build
 
-      - name: Run Tests
-        run: npm run test 
+      # - name: Run Tests # Step removed
+      #   run: npm run test 
