@@ -14,7 +14,7 @@ function DoctorOnlyPage() {
         </div>
         
         <p className="mb-6">
-          此页面使用了 withAuth 高阶组件，并设置了角色限制为 'doctor'。
+          此页面使用了 withAuth 高阶组件，并设置了角色限制为 &apos;doctor&apos;。
           其他角色的用户即使已登录，也会被重定向到首页。
         </p>
         

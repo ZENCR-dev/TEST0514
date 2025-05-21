@@ -200,5 +200,6 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
   );
 });
 
-// 明确导出
-export { MedicineSearch }; 
+MedicineSearch.displayName = 'MedicineSearch';
+
+export default MedicineSearch; 
