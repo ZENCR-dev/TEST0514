@@ -30,10 +30,12 @@ jobs:
 
       - name: Display package.json lint script
         run: |
-          echo "Lint script: $(node -pe \"require('./package.json').scripts.lint\")"
+          echo "Attempting to read lint script from package.json:"
+          node -e "try { console.log(JSON.stringify(require('./package.json').scripts.lint)); } catch (e) { console.error('Error reading or parsing lint script:', e.message); process.exit(1); }"
       
       - name: Display .eslintrc.json content
         run: |
+          echo "Attempting to read .eslintrc.json:"
           cat .eslintrc.json || echo ".eslintrc.json not found or cat failed"
 
       - name: Run ESLint
