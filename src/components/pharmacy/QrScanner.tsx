@@ -47,10 +47,12 @@ const QrScanner: React.FC<QrScannerProps> = ({
       
       const config = {
         fps: 10,
-        qrbox: { width: 250, height: 250 },
+        // 设置固定的扫描框大小，与CSS中的样式保持一致
+        qrbox: { width: 200, height: 200 },
+        aspectRatio: 1.0, // 保持视频流方形，便于对焦
         formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
         rememberLastUsedCamera: true,
-        showTorchButtonIfSupported: true,
+        showTorchButtonIfSupported: false, // 禁用手电筒按钮
         // 隐藏摄像头选择UI，让库自动选择合适的摄像头
         showScanTypeSelector: false,
         defaultDeviceId: 'environment', // 尝试使用后置摄像头
@@ -104,6 +106,29 @@ const QrScanner: React.FC<QrScannerProps> = ({
       // 重新渲染并启动扫描
       scanner.render(handleScanSuccess, handleScanFailure);
       isScanningRef.current = true;
+      
+      // 强制隐藏选择摄像头的下拉菜单和手电筒按钮（以防CSS未完全生效）
+      setTimeout(() => {
+        try {
+          const selectElement = document.querySelector('#qr-reader__dashboard_section_csr select');
+          if (selectElement) {
+            (selectElement as HTMLElement).style.display = 'none';
+          }
+          
+          const torchButton = document.querySelector('#qr-reader__dashboard_section_torch button');
+          if (torchButton) {
+            (torchButton as HTMLElement).style.display = 'none';
+          }
+          
+          // 强制隐藏Select Camera文字
+          const selectLabel = document.querySelector('#qr-reader__dashboard_section_csr label');
+          if (selectLabel) {
+            (selectLabel as HTMLElement).style.display = 'none';
+          }
+        } catch (error) {
+          console.error("[QrScanner] Error hiding UI elements:", error);
+        }
+      }, 300);
     } else if (!isActive && isScanningRef.current) {
       if (verbose) console.log("[QrScanner] Stopping scanner and releasing camera");
       // 完全停止扫描器并释放摄像头，而不只是暂停
@@ -116,10 +141,11 @@ const QrScanner: React.FC<QrScannerProps> = ({
           // 重新创建一个新的扫描器实例，以便下次激活时使用
           const config = {
             fps: 10,
-            qrbox: { width: 250, height: 250 },
+            qrbox: { width: 200, height: 200 },
+            aspectRatio: 1.0,
             formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
             rememberLastUsedCamera: true,
-            showTorchButtonIfSupported: true,
+            showTorchButtonIfSupported: false,
             showScanTypeSelector: false,
             defaultDeviceId: 'environment',
             // 自定义按钮文本
@@ -151,10 +177,14 @@ const QrScanner: React.FC<QrScannerProps> = ({
         id={scannerContainerId} 
         className="w-full overflow-hidden rounded-md"
         style={{
-          minHeight: '300px',
-          position: 'relative'
+          minHeight: '350px', // 增加高度以容纳引导UI
+          position: 'relative',
+          background: '#000' // 添加黑色背景以突出扫描框
         }}
       />
+      <p className="text-center text-sm text-muted-foreground mt-2">
+        请将二维码置于扫描框中央，保持稳定
+      </p>
     </div>
   );
 };

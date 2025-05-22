@@ -3,7 +3,7 @@ import { withAuth } from '@/components/auth/withAuth';
 import { PharmacyLayout } from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Scan, Search, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Scan, Search, AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
 import { QrScanner } from '@/components/pharmacy';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Html5QrcodeResult } from 'html5-qrcode';
@@ -74,22 +74,34 @@ function ScanPage() {
             </div>
             
             {!showScanner && (
-              <Button 
-                onClick={() => {
-                  setShowScanner(true);
-                  setScannedData(null);
-                  setScanError(null);
-                }}
-                className="w-full sm:w-auto"
-              >
-                <Scan className="mr-2 h-4 w-4" /> 开始扫描
-              </Button>
+              <>
+                <Button 
+                  onClick={() => {
+                    setShowScanner(true);
+                    setScannedData(null);
+                    setScanError(null);
+                  }}
+                  className="w-full sm:w-auto"
+                >
+                  <Scan className="mr-2 h-4 w-4" /> 开始扫描
+                </Button>
+                
+                <Alert variant="default" className="mt-4 bg-muted/50">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>扫描提示</AlertTitle>
+                  <AlertDescription className="text-sm">
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>请确保处方二维码清晰可见</li>
+                      <li>将二维码对准扫描框中央</li>
+                      <li>保持手机稳定，距离二维码约10-20厘米</li>
+                      <li>环境光线充足时扫描效果更佳</li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              </>
             )}
 
             <div style={{ display: showScanner ? 'block' : 'none' }}>
-              <p className="text-sm text-muted-foreground mb-4">
-                请将处方二维码置于摄像头扫描框内。
-              </p>
               <QrScanner 
                 isActive={showScanner}
                 onScanSuccess={handleScanSuccess} 

@@ -16,6 +16,18 @@
 #qr-reader__scan_region {
   padding: 0 !important;
   background: transparent !important;
+  position: relative !important;
+}
+
+/* 隐藏摄像头选择下拉菜单和相关元素 */
+#qr-reader__dashboard_section_csr select,
+#qr-reader__dashboard_section_csr label[for="qr-reader__dashboard_section_csr"] {
+  display: none !important;
+}
+
+/* 隐藏Switch On Torch按钮 */
+#qr-reader__dashboard_section_torch {
+  display: none !important;
 }
 
 /* 统一按钮样式 - 主按钮(开始扫描/请求权限) */
@@ -90,6 +102,38 @@
   display: none !important;
 }
 
+/* 添加扫描框指导样式 */
+#qr-reader__scan_region:after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  transform: translate(-50%, -50%);
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* 添加扫描框引导文字 */
+#qr-reader__scan_region:before {
+  content: '请将二维码对准此框';
+  position: absolute;
+  top: calc(50% + 110px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 14px;
+  z-index: 3;
+  background-color: rgba(0, 0, 0, 0.6);
+  padding: 4px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
 /* 状态信息样式 */
 #qr-reader__status_span {
   font-size: 0.875rem !important;
@@ -110,5 +154,15 @@ canvas {
   #qr-reader__filescan label {
     width: 100% !important;
     margin: 5px 0 !important;
+  }
+  
+  /* 小屏幕设备扫描框调整 */
+  #qr-reader__scan_region:after {
+    width: 180px;
+    height: 180px;
+  }
+  
+  #qr-reader__scan_region:before {
+    top: calc(50% + 100px);
   }
 } 
