@@ -47,8 +47,12 @@ const QrScanner: React.FC<QrScannerProps> = ({
       
       const config = {
         fps: 10,
-        // 设置固定的扫描框大小，与CSS中的样式保持一致
-        qrbox: { width: 200, height: 200 },
+        // 设置动态的扫描框大小
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+          const qrboxSize = Math.floor(minEdge * 0.80); // 使用80%的大小
+          return { width: qrboxSize, height: qrboxSize };
+        },
         aspectRatio: 1.0, // 保持视频流方形，便于对焦
         formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
         rememberLastUsedCamera: true,
@@ -125,10 +129,22 @@ const QrScanner: React.FC<QrScannerProps> = ({
           if (selectLabel) {
             (selectLabel as HTMLElement).style.display = 'none';
           }
+
+          // Forcefully hide library's default camera control buttons
+          const startButton = document.getElementById('html5-qrcode-button-camera-start');
+          if (startButton) {
+            startButton.style.setProperty('display', 'none', 'important');
+          }
+
+          const stopButton = document.getElementById('html5-qrcode-button-camera-stop');
+          if (stopButton) {
+            stopButton.style.setProperty('display', 'none', 'important');
+          }
+          
         } catch (error) {
           console.error("[QrScanner] Error hiding UI elements:", error);
         }
-      }, 300);
+      }, 600); // Increased delay to 600ms
     } else if (!isActive && isScanningRef.current) {
       if (verbose) console.log("[QrScanner] Stopping scanner and releasing camera");
       // 完全停止扫描器并释放摄像头，而不只是暂停
@@ -141,7 +157,12 @@ const QrScanner: React.FC<QrScannerProps> = ({
           // 重新创建一个新的扫描器实例，以便下次激活时使用
           const config = {
             fps: 10,
-            qrbox: { width: 200, height: 200 },
+            // 设置动态的扫描框大小
+            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+              const qrboxSize = Math.floor(minEdge * 0.80); // 使用80%的大小
+              return { width: qrboxSize, height: qrboxSize };
+            },
             aspectRatio: 1.0,
             formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
             rememberLastUsedCamera: true,

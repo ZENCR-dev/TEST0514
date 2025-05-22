@@ -93,7 +93,7 @@ function ScanPage() {
                     <ul className="list-disc pl-5 space-y-1">
                       <li>请确保处方二维码清晰可见</li>
                       <li>将二维码对准扫描框中央</li>
-                      <li>保持手机稳定，距离二维码约10-20厘米</li>
+                      <li>保持手机稳定，适当调整设备与二维码的距离，直至系统能够识别</li>
                       <li>环境光线充足时扫描效果更佳</li>
                     </ul>
                   </AlertDescription>
