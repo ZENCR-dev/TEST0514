@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 导入QR扫描器样式 */
+@import './qr-scanner.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;
