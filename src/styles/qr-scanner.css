@@ -5,6 +5,9 @@
   border: none !important;
   padding: 0 !important;
   box-shadow: none !important;
+  background-color: #000 !important;
+  border-radius: 0.375rem !important;
+  overflow: hidden !important;
 }
 
 /* 标题栏隐藏 */
@@ -17,6 +20,10 @@
   padding: 0 !important;
   background: transparent !important;
   position: relative !important;
+  min-height: 300px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
 
 /* 隐藏摄像头选择下拉菜单和相关元素 */
@@ -64,6 +71,7 @@
 }
 
 #qr-reader__filescan {
+  display: none !important;
   border: none !important;
   padding: 0 !important;
   margin: 5px !important;
@@ -102,50 +110,59 @@
   display: none !important;
 }
 
-/* 添加扫描框指导样式 */
-#qr-reader__scan_region:after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 200px;
-  height: 200px;
-  transform: translate(-50%, -50%);
-  border: 2px dashed rgba(255, 255, 255, 0.5);
-  border-radius: 8px;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-  z-index: 2;
-  pointer-events: none;
-}
-
-/* 添加扫描框引导文字 */
-#qr-reader__scan_region:before {
-  content: '请将二维码对准此框';
-  position: absolute;
-  top: calc(50% + 110px);
-  left: 50%;
-  transform: translateX(-50%);
-  color: white;
-  font-size: 14px;
-  z-index: 3;
-  background-color: rgba(0, 0, 0, 0.6);
-  padding: 4px 12px;
-  border-radius: 4px;
-  white-space: nowrap;
+#qr-reader__scan_region video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  max-height: 400px !important;
 }
 
 /* 状态信息样式 */
 #qr-reader__status_span {
   font-size: 0.875rem !important;
-  color: hsl(var(--muted-foreground)) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
   text-align: center !important;
   margin: 10px 0 !important;
-  background: transparent !important;
+  background: rgba(0, 0, 0, 0.5) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
 }
 
 /* 调整扫描框大小和样式 */
 canvas {
   border-radius: 8px !important;
+}
+
+/* 自定义扫描框样式 */
+#qr-scanner-guide-box {
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  border: 2px dashed rgba(255, 255, 255, 0.7) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5) !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+
+#qr-scanner-guide-text {
+  position: absolute !important;
+  color: white !important;
+  font-size: 14px !important;
+  z-index: 3 !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  padding: 4px 12px !important;
+  border-radius: 4px !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+/* 扫描线动画 */
+@keyframes scan-line {
+  0% { top: 0; }
+  50% { top: calc(100% - 2px); }
+  100% { top: 0; }
 }
 
 /* 响应式调整 */
@@ -156,13 +173,7 @@ canvas {
     margin: 5px 0 !important;
   }
   
-  /* 小屏幕设备扫描框调整 */
-  #qr-reader__scan_region:after {
-    width: 180px;
-    height: 180px;
-  }
-  
-  #qr-reader__scan_region:before {
-    top: calc(50% + 100px);
+  #qr-reader__scan_region video {
+    max-height: 80vh !important;
   }
 } 
