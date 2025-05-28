@@ -3,6 +3,7 @@ import type { AppProps } from 'next/app';
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function App({ Component, pageProps }: AppProps) {
   const { checkAuth } = useAuthStore();
@@ -22,6 +23,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <ErrorBoundary>
       <Component {...pageProps} />
+      <Toaster />
     </ErrorBoundary>
   );
 } 

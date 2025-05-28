@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { withAuth } from '@/components/auth/withAuth';
 import { PharmacyLayout } from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,8 @@ import { generateInvoiceData } from '@/utils/invoiceGenerator';
 import { InvoiceContent } from '@/components/invoice/InvoiceContent';
 import { InvoiceData } from '@/types/invoice';
 import { generateStandardPDF, generatePrintHTML } from '@/utils/pdfGenerator';
+import { initializeRecommendedCameraId } from '@/utils/cameraUtils';
+import { Toaster } from '@/components/ui/toaster';
 
 function ScanPage() {
   const [prescriptionId, setPrescriptionId] = useState('');
@@ -22,6 +24,7 @@ function ScanPage() {
   const [scanError, setScanError] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
+  const [cameraInitialized, setCameraInitialized] = useState(false);
   
   // 新增状态：处方解析和计算结果
   const [parseStatus, setParseStatus] = useState<PrescriptionParseStatus>('idle');
@@ -33,6 +36,28 @@ function ScanPage() {
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
   const [invoiceGenerating, setInvoiceGenerating] = useState(false);
   const invoiceContentRef = useRef<HTMLDivElement>(null);
+
+  // 初始化推荐摄像头
+  useEffect(() => {
+    const initCamera = async () => {
+      try {
+        const recommendedId = await initializeRecommendedCameraId();
+        if (recommendedId) {
+          setSelectedCameraId(recommendedId);
+          setCameraInitialized(true);
+          console.log('[ScanPage] Initialized with recommended camera:', recommendedId);
+        } else {
+          console.warn('[ScanPage] No recommended camera found');
+          setCameraInitialized(true); // 仍然标记为已初始化，让用户手动选择
+        }
+      } catch (error) {
+        console.error('[ScanPage] Error initializing camera:', error);
+        setCameraInitialized(true); // 即使出错也标记为已初始化
+      }
+    };
+
+    initCamera();
+  }, []);
 
   // 处理QR码解析和计算
   const processPrescriptionQR = useCallback((qrText: string) => {
@@ -126,6 +151,15 @@ function ScanPage() {
     
     setScanError(displayError);
     setScannedData(null);
+  }, []);
+
+  // 开始扫描的处理函数
+  const handleStartScanning = useCallback(() => {
+    setShowScanner(true);
+    setScannedData(null);
+    setScanError(null);
+    setParseError(null);
+    setCalculationResult(null);
   }, []);
 
   // 生成报价单
@@ -226,14 +260,12 @@ function ScanPage() {
             {!showScanner && (
               <>
                 <Button 
-                  onClick={() => {
-                    setShowScanner(true);
-                    setScannedData(null);
-                    setScanError(null);
-                  }}
+                  onClick={handleStartScanning}
                   className="w-full sm:w-auto"
+                  disabled={!cameraInitialized}
                 >
-                  <Scan className="mr-2 h-4 w-4" /> 开始扫描
+                  <Scan className="mr-2 h-4 w-4" /> 
+                  {cameraInitialized ? '开始扫描' : '正在初始化摄像头...'}
                 </Button>
                 
                 <Alert variant="default" className="mt-4 bg-muted/50">
@@ -258,6 +290,7 @@ function ScanPage() {
                   onCameraSelect={setSelectedCameraId}
                   selectedCameraId={selectedCameraId}
                   disabled={!showScanner}
+                  autoSelectOnLoad={false} // 不要自动选择，因为我们已经在页面级别初始化了
                 />
               </div>
               
@@ -511,6 +544,9 @@ function ScanPage() {
           </div>
         </div>
       )}
+
+      {/* Toast组件 */}
+      <Toaster />
     </PharmacyLayout>
   );
 }

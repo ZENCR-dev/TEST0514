@@ -20,15 +20,47 @@ const QrScanner: React.FC<QrScannerProps> = ({
   const qrCodeReaderRef = useRef<Html5Qrcode | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [currentCameraId, setCurrentCameraId] = useState<string | undefined>(cameraId);
+  const [scanSuccess, setScanSuccess] = useState(false); // 防止重复扫描
 
   const handleScanSuccess = useCallback((decodedText: string, decodedResult: Html5QrcodeResult) => {
+    // 防止重复扫描
+    if (scanSuccess) {
+      return;
+    }
+    
+    setScanSuccess(true);
+    
     if (verbose) {
       console.log('[QrScanner] Scan success:', decodedText);
     }
-    onScanSuccess(decodedText, decodedResult);
-  }, [onScanSuccess, verbose]);
+    
+    // 立即停止扫描器以释放摄像头资源
+    const stopScanning = async () => {
+      if (qrCodeReaderRef.current && isScanning) {
+        try {
+          await qrCodeReaderRef.current.stop();
+          setIsScanning(false);
+          if (verbose) {
+            console.log('[QrScanner] Scanner stopped after successful scan');
+          }
+        } catch (error) {
+          console.error('[QrScanner] Error stopping scanner after success:', error);
+        }
+      }
+    };
+    
+    // 先停止扫描器，然后调用回调
+    stopScanning().then(() => {
+      onScanSuccess(decodedText, decodedResult);
+    });
+  }, [onScanSuccess, verbose, scanSuccess, isScanning]);
 
   const handleScanFailure = useCallback((error: any) => {
+    // 如果已经扫描成功，忽略后续的失败事件
+    if (scanSuccess) {
+      return;
+    }
+    
     // 只在详细模式下记录扫描失败（避免控制台刷屏）
     if (verbose && error) {
       console.log('[QrScanner] Scan failure:', error);
@@ -37,7 +69,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
     if (onScanFailure) {
       onScanFailure(error);
     }
-  }, [onScanFailure, verbose]);
+  }, [onScanFailure, verbose, scanSuccess]);
 
   // 完全停止扫描器
   const stopScannerCompletely = useCallback(async () => {
@@ -51,6 +83,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
         console.error('[QrScanner] Error stopping scanner:', error);
       } finally {
         setIsScanning(false);
+        setScanSuccess(false); // 重置扫描成功状态
       }
     }
   }, [isScanning, verbose]);
@@ -62,7 +95,16 @@ const QrScanner: React.FC<QrScannerProps> = ({
     }
 
     try {
-      const finalCameraId = targetCameraId || cameraId || 'environment';
+      // 确定要使用的摄像头ID
+      let finalCameraId = targetCameraId || cameraId;
+      
+      // 如果没有指定摄像头ID，使用environment作为默认值
+      if (!finalCameraId) {
+        finalCameraId = 'environment';
+        if (verbose) {
+          console.log('[QrScanner] No camera ID specified, using environment as fallback');
+        }
+      }
       
       await qrCodeReaderRef.current.start(
         finalCameraId,
@@ -78,6 +120,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
 
       setIsScanning(true);
       setCurrentCameraId(finalCameraId);
+      setScanSuccess(false); // 重置扫描成功状态
       
       if (verbose) {
         console.log('[QrScanner] Scanner started with camera:', finalCameraId);
@@ -128,6 +171,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
     } catch (error) {
       console.error('[QrScanner] Error starting scanner with camera', targetCameraId || cameraId, ':', error);
       setIsScanning(false);
+      setScanSuccess(false);
       
       if (onScanFailure) {
         onScanFailure(error);
@@ -151,7 +195,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
     await startScanner(newCameraId);
   }, [currentCameraId, stopScannerCompletely, startScanner, verbose]);
 
-  // 主要的效果：处理isActive和cameraId变化
+  // 主要的效果：处理isActive变化
   useEffect(() => {
     const qrCodeElementId = 'qr-reader';
 
@@ -168,7 +212,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
         }
       }
 
-      if (!isScanning) {
+      if (!isScanning && !scanSuccess) {
         startScanner();
       }
     } else {
@@ -180,14 +224,14 @@ const QrScanner: React.FC<QrScannerProps> = ({
         stopScannerCompletely();
       }
     };
-  }, [isActive, startScanner, stopScannerCompletely, verbose, cameraId]);
+  }, [isActive, startScanner, stopScannerCompletely, verbose, isScanning, scanSuccess]);
 
   // 处理摄像头ID变化的专门效果
   useEffect(() => {
-    if (isActive && cameraId && cameraId !== currentCameraId && qrCodeReaderRef.current) {
+    if (isActive && cameraId && cameraId !== currentCameraId && qrCodeReaderRef.current && !scanSuccess) {
       switchCamera(cameraId);
     }
-  }, [cameraId, currentCameraId, isActive, switchCamera]);
+  }, [cameraId, currentCameraId, isActive, switchCamera, scanSuccess]);
 
   // 清理函数
   useEffect(() => {
@@ -213,6 +257,25 @@ const QrScanner: React.FC<QrScannerProps> = ({
           overflow: 'hidden'
         }}
       />
+      
+      {/* 扫描状态指示器 */}
+      {isScanning && (
+        <div className="text-center mt-2">
+          <div className="inline-flex items-center text-sm text-blue-600">
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-2"></div>
+            正在扫描...
+          </div>
+        </div>
+      )}
+      
+      {scanSuccess && (
+        <div className="text-center mt-2">
+          <div className="inline-flex items-center text-sm text-green-600">
+            <div className="w-2 h-2 bg-green-600 rounded-full mr-2"></div>
+            扫描成功
+          </div>
+        </div>
+      )}
       
       {/* 隐藏库自带的所有UI控件 */}
       <style jsx>{`
