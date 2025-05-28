@@ -25,6 +25,7 @@ function ScanPage() {
   const [showScanner, setShowScanner] = useState(false);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
   const [cameraInitialized, setCameraInitialized] = useState(false);
+  const [isClient, setIsClient] = useState(false); // 客户端渲染检查
   
   // 新增状态：处方解析和计算结果
   const [parseStatus, setParseStatus] = useState<PrescriptionParseStatus>('idle');
@@ -37,8 +38,16 @@ function ScanPage() {
   const [invoiceGenerating, setInvoiceGenerating] = useState(false);
   const invoiceContentRef = useRef<HTMLDivElement>(null);
 
+  // 客户端渲染检查
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // 初始化推荐摄像头
   useEffect(() => {
+    // 确保只在客户端环境中运行
+    if (!isClient) return;
+    
     const initCamera = async () => {
       try {
         const recommendedId = await initializeRecommendedCameraId();
@@ -57,7 +66,7 @@ function ScanPage() {
     };
 
     initCamera();
-  }, []);
+  }, [isClient]);
 
   // 处理QR码解析和计算
   const processPrescriptionQR = useCallback((qrText: string) => {
@@ -111,10 +120,32 @@ function ScanPage() {
     processPrescriptionQR(prescriptionId);
   }, [prescriptionId, processPrescriptionQR]);
 
+  // 开始扫描的处理函数
+  const handleStartScanning = useCallback(() => {
+    // 彻底重置所有相关状态
+    setShowScanner(true);
+    setScannedData(null);
+    setScanError(null);
+    setParseError(null);
+    setCalculationResult(null);
+    setParseStatus('idle');
+    
+    console.log('[ScanPage] Starting scan with camera:', selectedCameraId);
+  }, [selectedCameraId]);
+
+  // 停止扫描的处理函数
+  const handleStopScanning = useCallback(() => {
+    setShowScanner(false);
+    setScanError(null);
+    console.log('[ScanPage] Stopping scan');
+  }, []);
+
   const handleScanSuccess = useCallback((decodedText: string, decodedResult: Html5QrcodeResult) => {
     console.log("Scan successful:", decodedText, decodedResult);
+    
+    // 立即设置扫描结果并关闭扫描器
     setScannedData(decodedText);
-    setScanError(null);
+    setScanError(null); // 清除任何之前的错误
     setShowScanner(false);
     
     // 开始解析和计算处方
@@ -129,10 +160,33 @@ function ScanPage() {
       errorStringToTest = errorMessage.message;
     }
 
+    // 忽略常见的非关键扫描错误
     if (errorStringToTest.includes('NotFoundException') || 
         errorStringToTest.includes('No MultiFormat Readers were able to detect the code')) {
       console.warn(`[SCANNER] QR code not found in current frame or a parse error occurred for the frame. Scanner is still active. Message: ${errorStringToTest}`);
       return; 
+    }
+
+    // 特别处理Canvas/视频流相关错误
+    if (errorStringToTest.includes('getImageData') ||
+        errorStringToTest.includes('source width is 0') ||
+        errorStringToTest.includes('IndexSizeError') ||
+        errorStringToTest.includes('Canvas') ||
+        errorStringToTest.toLowerCase().includes('video')) {
+      console.warn('[SCANNER] Canvas/Video stream error, attempting recovery:', errorStringToTest);
+      
+      // 设置更友好的错误信息
+      setScanError("摄像头初始化中，请稍候重试。如果问题持续，请检查摄像头权限设置。");
+      
+      // 自动重试机制
+      setTimeout(() => {
+        if (showScanner) {
+          console.log('[SCANNER] Auto-retrying scan after canvas error');
+          setScanError(null); // 清除错误信息，让用户可以重试
+        }
+      }, 3000);
+      
+      return;
     }
 
     console.error("[SCANNER] A more critical scan error occurred:", errorMessage);
@@ -147,20 +201,14 @@ function ScanPage() {
         displayError = "未找到可用的摄像头设备。";
     } else if (errorMessage && errorMessage.name === 'NotReadableError') {
         displayError = "摄像头当前无法访问，可能已被其他应用占用或存在硬件问题。";
+    } else if (lowerErrorString.includes('overconstrained') || 
+               lowerErrorString.includes('constraint')) {
+        displayError = "摄像头配置不兼容。请尝试选择其他摄像头或重新启动浏览器。";
     }
     
     setScanError(displayError);
     setScannedData(null);
-  }, []);
-
-  // 开始扫描的处理函数
-  const handleStartScanning = useCallback(() => {
-    setShowScanner(true);
-    setScannedData(null);
-    setScanError(null);
-    setParseError(null);
-    setCalculationResult(null);
-  }, []);
+  }, [showScanner]);
 
   // 生成报价单
   const handleGenerateInvoice = useCallback(() => {
@@ -303,7 +351,7 @@ function ScanPage() {
               />
               <Button 
                 variant="destructive" 
-                onClick={() => setShowScanner(false)} 
+                onClick={handleStopScanning} 
                 className="w-full sm:w-auto mt-4"
               >
                 <XCircle className="h-4 w-4 mr-2" /> 取消扫描

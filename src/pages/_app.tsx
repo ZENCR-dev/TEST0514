@@ -15,9 +15,9 @@ export default function App({ Component, pageProps }: AppProps) {
     setMounted(true);
   }, [checkAuth]);
 
-  // 在服务器端渲染期间不挂载错误边界
-  if (!mounted && typeof window === 'undefined') {
-    return <Component {...pageProps} />;
+  // 在服务器端渲染期间不挂载，避免水合错误
+  if (!mounted) {
+    return null;
   }
 
   return (

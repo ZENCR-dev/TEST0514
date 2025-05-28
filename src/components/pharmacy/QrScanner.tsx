@@ -18,58 +18,131 @@ const QrScanner: React.FC<QrScannerProps> = ({
   cameraId
 }) => {
   const qrCodeReaderRef = useRef<Html5Qrcode | null>(null);
+  const videoElementRef = useRef<HTMLVideoElement | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [currentCameraId, setCurrentCameraId] = useState<string | undefined>(cameraId);
-  const [scanSuccess, setScanSuccess] = useState(false); // 防止重复扫描
+  const [hasSucceeded, setHasSucceeded] = useState(false);
+  const [isProcessingSuccess, setIsProcessingSuccess] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
+  const [initializationError, setInitializationError] = useState<string | null>(null);
+
+  // 客户端渲染检查
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // 等待视频流准备就绪
+  const waitForVideoReady = useCallback(async (maxWaitTime = 5000): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const startTime = Date.now();
+      const checkVideoReady = () => {
+        // 查找video元素
+        const videoElement = document.querySelector('#qr-reader video') as HTMLVideoElement;
+        
+        if (videoElement) {
+          videoElementRef.current = videoElement;
+          
+          // 检查视频流是否真正准备好
+          if (videoElement.videoWidth > 0 && videoElement.videoHeight > 0 && videoElement.readyState >= 2) {
+            if (verbose) {
+              console.log('[QrScanner] Video stream ready:', {
+                width: videoElement.videoWidth,
+                height: videoElement.videoHeight,
+                readyState: videoElement.readyState
+              });
+            }
+            setVideoReady(true);
+            resolve(true);
+            return;
+          }
+        }
+        
+        // 检查是否超时
+        if (Date.now() - startTime > maxWaitTime) {
+          console.warn('[QrScanner] Video ready check timeout');
+          resolve(false);
+          return;
+        }
+        
+        // 继续检查
+        setTimeout(checkVideoReady, 100);
+      };
+      
+      checkVideoReady();
+    });
+  }, [verbose]);
 
   const handleScanSuccess = useCallback((decodedText: string, decodedResult: Html5QrcodeResult) => {
-    // 防止重复扫描
-    if (scanSuccess) {
+    // 防止重复处理
+    if (hasSucceeded || isProcessingSuccess) {
       return;
     }
     
-    setScanSuccess(true);
+    setIsProcessingSuccess(true);
+    setHasSucceeded(true);
     
     if (verbose) {
       console.log('[QrScanner] Scan success:', decodedText);
     }
     
     // 立即停止扫描器以释放摄像头资源
-    const stopScanning = async () => {
-      if (qrCodeReaderRef.current && isScanning) {
-        try {
+    const stopAndCallback = async () => {
+      try {
+        if (qrCodeReaderRef.current && isScanning) {
           await qrCodeReaderRef.current.stop();
           setIsScanning(false);
           if (verbose) {
             console.log('[QrScanner] Scanner stopped after successful scan');
           }
-        } catch (error) {
-          console.error('[QrScanner] Error stopping scanner after success:', error);
         }
+      } catch (error) {
+        console.error('[QrScanner] Error stopping scanner after success:', error);
+      } finally {
+        // 无论是否成功停止，都要调用回调
+        setIsProcessingSuccess(false);
+        onScanSuccess(decodedText, decodedResult);
       }
     };
     
-    // 先停止扫描器，然后调用回调
-    stopScanning().then(() => {
-      onScanSuccess(decodedText, decodedResult);
-    });
-  }, [onScanSuccess, verbose, scanSuccess, isScanning]);
+    stopAndCallback();
+  }, [onScanSuccess, verbose, hasSucceeded, isProcessingSuccess, isScanning]);
 
   const handleScanFailure = useCallback((error: any) => {
-    // 如果已经扫描成功，忽略后续的失败事件
-    if (scanSuccess) {
+    // 如果已经扫描成功或正在处理成功，忽略后续的失败事件
+    if (hasSucceeded || isProcessingSuccess) {
+      return;
+    }
+
+    // 检查是否是Canvas相关的错误
+    const errorString = typeof error === 'string' ? error : (error?.message || '');
+    if (errorString.includes('getImageData') || 
+        errorString.includes('source width is 0') ||
+        errorString.includes('IndexSizeError')) {
+      console.warn('[QrScanner] Canvas/Video stream not ready, retrying...', errorString);
+      
+      // 尝试重新等待视频流准备
+      if (videoElementRef.current) {
+        setTimeout(() => {
+          waitForVideoReady(2000).then((ready) => {
+            if (!ready && onScanFailure) {
+              onScanFailure(new Error('视频流初始化失败，请检查摄像头权限和硬件状态'));
+            }
+          });
+        }, 500);
+      }
       return;
     }
     
-    // 只在详细模式下记录扫描失败（避免控制台刷屏）
-    if (verbose && error) {
+    // 只在详细模式下记录常规扫描失败（避免控制台刷屏）
+    if (verbose && error && !errorString.includes('NotFoundException')) {
       console.log('[QrScanner] Scan failure:', error);
     }
     
     if (onScanFailure) {
       onScanFailure(error);
     }
-  }, [onScanFailure, verbose, scanSuccess]);
+  }, [onScanFailure, verbose, hasSucceeded, isProcessingSuccess, waitForVideoReady]);
 
   // 完全停止扫描器
   const stopScannerCompletely = useCallback(async () => {
@@ -83,18 +156,32 @@ const QrScanner: React.FC<QrScannerProps> = ({
         console.error('[QrScanner] Error stopping scanner:', error);
       } finally {
         setIsScanning(false);
-        setScanSuccess(false); // 重置扫描成功状态
+        setVideoReady(false);
+        videoElementRef.current = null;
       }
     }
   }, [isScanning, verbose]);
 
+  // 重置组件状态
+  const resetComponentState = useCallback(() => {
+    setHasSucceeded(false);
+    setIsProcessingSuccess(false);
+    setIsScanning(false);
+    setVideoReady(false);
+    setInitializationError(null);
+    videoElementRef.current = null;
+  }, []);
+
   // 启动扫描器
   const startScanner = useCallback(async (targetCameraId?: string) => {
-    if (!qrCodeReaderRef.current || isScanning) {
+    // 确保只在客户端环境中运行
+    if (!isClient || !qrCodeReaderRef.current || isScanning || isProcessingSuccess) {
       return;
     }
 
     try {
+      setInitializationError(null);
+      
       // 确定要使用的摄像头ID
       let finalCameraId = targetCameraId || cameraId;
       
@@ -106,10 +193,11 @@ const QrScanner: React.FC<QrScannerProps> = ({
         }
       }
       
+      // 启动摄像头但使用更保守的配置
       await qrCodeReaderRef.current.start(
         finalCameraId,
         {
-          fps: 10,
+          fps: 5, // 降低帧率减少压力
           qrbox: { width: 250, height: 250 },
           aspectRatio: 1.0,
           disableFlip: false,
@@ -120,67 +208,57 @@ const QrScanner: React.FC<QrScannerProps> = ({
 
       setIsScanning(true);
       setCurrentCameraId(finalCameraId);
-      setScanSuccess(false); // 重置扫描成功状态
       
       if (verbose) {
         console.log('[QrScanner] Scanner started with camera:', finalCameraId);
       }
 
+      // 等待视频流准备就绪
+      const isVideoReady = await waitForVideoReady(8000); // 增加等待时间
+      
+      if (!isVideoReady) {
+        throw new Error('视频流初始化超时，请检查摄像头状态');
+      }
+
       // 强制隐藏库默认的UI控件
       setTimeout(() => {
         try {
-          const selectElement = document.querySelector('#qr-reader__dashboard_section_csr select');
-          if (selectElement) {
-            (selectElement as HTMLElement).style.display = 'none';
-          }
+          const elementsToHide = [
+            '#qr-reader__dashboard_section_csr select',
+            '#qr-reader__dashboard_section_torch button',
+            '#qr-reader__dashboard_section_csr label',
+            '#html5-qrcode-button-camera-start',
+            '#html5-qrcode-button-camera-stop',
+            '#html5-qrcode-button-file-selection',
+            '#html5-qrcode-button-camera-permission'
+          ];
           
-          const torchButton = document.querySelector('#qr-reader__dashboard_section_torch button');
-          if (torchButton) {
-            (torchButton as HTMLElement).style.display = 'none';
-          }
-          
-          const selectLabel = document.querySelector('#qr-reader__dashboard_section_csr label');
-          if (selectLabel) {
-            (selectLabel as HTMLElement).style.display = 'none';
-          }
-
-          const startButton = document.getElementById('html5-qrcode-button-camera-start');
-          if (startButton) {
-            startButton.style.display = 'none';
-          }
-
-          const stopButton = document.getElementById('html5-qrcode-button-camera-stop');
-          if (stopButton) {
-            stopButton.style.display = 'none';
-          }
-
-          const fileSelectionButton = document.getElementById('html5-qrcode-button-file-selection');
-          if (fileSelectionButton) {
-            fileSelectionButton.style.display = 'none';
-          }
-
-          const requestPermissionButton = document.getElementById('html5-qrcode-button-camera-permission');
-          if (requestPermissionButton) {
-            requestPermissionButton.style.display = 'none';
-          }
+          elementsToHide.forEach(selector => {
+            const element = document.querySelector(selector) as HTMLElement;
+            if (element) {
+              element.style.display = 'none';
+            }
+          });
         } catch (hideError) {
           console.warn('[QrScanner] Warning: Failed to hide some UI elements:', hideError);
         }
-      }, 100);
+      }, 200);
 
     } catch (error) {
       console.error('[QrScanner] Error starting scanner with camera', targetCameraId || cameraId, ':', error);
       setIsScanning(false);
-      setScanSuccess(false);
+      setInitializationError(error instanceof Error ? error.message : '摄像头初始化失败');
       
       if (onScanFailure) {
         onScanFailure(error);
       }
     }
-  }, [cameraId, handleScanSuccess, handleScanFailure, isScanning, onScanFailure, verbose]);
+  }, [cameraId, handleScanSuccess, handleScanFailure, isScanning, onScanFailure, verbose, isProcessingSuccess, isClient, waitForVideoReady]);
 
   // 切换摄像头
   const switchCamera = useCallback(async (newCameraId: string) => {
+    if (!isClient) return;
+    
     if (verbose) {
       console.log('[QrScanner] Switching camera from', currentCameraId, 'to', newCameraId);
     }
@@ -189,14 +267,17 @@ const QrScanner: React.FC<QrScannerProps> = ({
     await stopScannerCompletely();
     
     // 等待一小段时间确保摄像头资源释放
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     // 使用新摄像头启动
     await startScanner(newCameraId);
-  }, [currentCameraId, stopScannerCompletely, startScanner, verbose]);
+  }, [currentCameraId, stopScannerCompletely, startScanner, verbose, isClient]);
 
   // 主要的效果：处理isActive变化
   useEffect(() => {
+    // 确保只在客户端环境中运行
+    if (!isClient) return;
+    
     const qrCodeElementId = 'qr-reader';
 
     if (isActive) {
@@ -204,7 +285,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
         // 初始化Html5Qrcode实例
         qrCodeReaderRef.current = new Html5Qrcode(qrCodeElementId, {
           formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          verbose: verbose
+          verbose: false // 关闭库的详细日志
         });
 
         if (verbose) {
@@ -212,26 +293,31 @@ const QrScanner: React.FC<QrScannerProps> = ({
         }
       }
 
-      if (!isScanning && !scanSuccess) {
+      if (!isScanning && !hasSucceeded && !isProcessingSuccess) {
         startScanner();
       }
     } else {
-      stopScannerCompletely();
+      // isActive变为false时，停止扫描并重置状态
+      stopScannerCompletely().then(() => {
+        resetComponentState();
+      });
     }
 
     return () => {
       if (!isActive) {
-        stopScannerCompletely();
+        stopScannerCompletely().then(() => {
+          resetComponentState();
+        });
       }
     };
-  }, [isActive, startScanner, stopScannerCompletely, verbose, isScanning, scanSuccess]);
+  }, [isActive, startScanner, stopScannerCompletely, verbose, isScanning, hasSucceeded, isProcessingSuccess, resetComponentState, isClient]);
 
   // 处理摄像头ID变化的专门效果
   useEffect(() => {
-    if (isActive && cameraId && cameraId !== currentCameraId && qrCodeReaderRef.current && !scanSuccess) {
+    if (isClient && isActive && cameraId && cameraId !== currentCameraId && qrCodeReaderRef.current && !hasSucceeded && !isProcessingSuccess) {
       switchCamera(cameraId);
     }
-  }, [cameraId, currentCameraId, isActive, switchCamera, scanSuccess]);
+  }, [cameraId, currentCameraId, isActive, switchCamera, hasSucceeded, isProcessingSuccess, isClient]);
 
   // 清理函数
   useEffect(() => {
@@ -239,10 +325,40 @@ const QrScanner: React.FC<QrScannerProps> = ({
       if (qrCodeReaderRef.current) {
         stopScannerCompletely().finally(() => {
           qrCodeReaderRef.current = null;
+          resetComponentState();
         });
       }
     };
-  }, [stopScannerCompletely]);
+  }, [stopScannerCompletely, resetComponentState]);
+
+  // 如果不是客户端环境，显示占位符
+  if (!isClient) {
+    return (
+      <div className="qr-scanner-container">
+        <div 
+          id="qr-reader" 
+          style={{ 
+            width: '100%', 
+            maxWidth: '400px', 
+            margin: '0 auto',
+            border: '2px solid #ddd',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            minHeight: '300px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f5f5f5'
+          }}
+        >
+          <div className="text-center text-gray-500">
+            <div className="w-8 h-8 bg-gray-300 rounded-full animate-pulse mx-auto mb-2"></div>
+            <span className="text-sm">正在加载扫描器...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="qr-scanner-container">
@@ -254,12 +370,22 @@ const QrScanner: React.FC<QrScannerProps> = ({
           margin: '0 auto',
           border: '2px solid #ddd',
           borderRadius: '8px',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          minHeight: '300px' // 确保最小高度，防止坍缩
         }}
       />
       
       {/* 扫描状态指示器 */}
-      {isScanning && (
+      {isScanning && !videoReady && !hasSucceeded && (
+        <div className="text-center mt-2">
+          <div className="inline-flex items-center text-sm text-orange-600">
+            <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse mr-2"></div>
+            正在初始化摄像头...
+          </div>
+        </div>
+      )}
+      
+      {isScanning && videoReady && !hasSucceeded && (
         <div className="text-center mt-2">
           <div className="inline-flex items-center text-sm text-blue-600">
             <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse mr-2"></div>
@@ -268,11 +394,29 @@ const QrScanner: React.FC<QrScannerProps> = ({
         </div>
       )}
       
-      {scanSuccess && (
+      {hasSucceeded && (
         <div className="text-center mt-2">
           <div className="inline-flex items-center text-sm text-green-600">
             <div className="w-2 h-2 bg-green-600 rounded-full mr-2"></div>
             扫描成功
+          </div>
+        </div>
+      )}
+      
+      {isProcessingSuccess && (
+        <div className="text-center mt-2">
+          <div className="inline-flex items-center text-sm text-orange-600">
+            <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse mr-2"></div>
+            正在处理...
+          </div>
+        </div>
+      )}
+      
+      {initializationError && (
+        <div className="text-center mt-2">
+          <div className="inline-flex items-center text-sm text-red-600">
+            <div className="w-2 h-2 bg-red-600 rounded-full mr-2"></div>
+            初始化失败: {initializationError}
           </div>
         </div>
       )}

@@ -1,278 +1,356 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Camera, Smartphone, AlertTriangle, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { getCameraDevices, getRecommendedCameraIdFromList, type CameraDevice } from '@/utils/cameraUtils';
+import { Html5Qrcode } from 'html5-qrcode';
+import { ChevronDown, Camera, Smartphone } from 'lucide-react';
 
-export interface CameraSelectorProps {
+interface CameraDevice {
+  id: string;
+  label: string;
+}
+
+interface CameraSelectorProps {
   onCameraSelect: (cameraId: string) => void;
   selectedCameraId?: string;
   disabled?: boolean;
-  className?: string;
-  autoSelectOnLoad?: boolean; // 新增：是否在加载完成后自动选择推荐摄像头
+  autoSelectOnLoad?: boolean;
+  layout?: 'buttons' | 'dropdown' | 'auto'; // 新增布局选项
 }
 
-export const CameraSelector: React.FC<CameraSelectorProps> = ({
-  onCameraSelect,
-  selectedCameraId,
-  disabled = false,
-  className = '',
-  autoSelectOnLoad = true
-}) => {
+export function CameraSelector({ 
+  onCameraSelect, 
+  selectedCameraId, 
+  disabled = false, 
+  autoSelectOnLoad = true,
+  layout = 'auto' 
+}: CameraSelectorProps) {
   const [cameras, setCameras] = useState<CameraDevice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [switching, setSwitching] = useState(false); // 切换摄像头时的加载状态
-  const { toast } = useToast();
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // 获取摄像头图标
-  const getCameraIcon = (camera: CameraDevice) => {
-    if (camera.type === 'front') {
-      return <Smartphone className="w-4 h-4" />;
-    }
-    return <Camera className="w-4 h-4" />;
-  };
+  // 检测是否为移动端
+  useEffect(() => {
+    const checkMobile = () => {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const mobileKeywords = ['mobile', 'android', 'iphone', 'ipad', 'tablet'];
+      const isMobileDevice = mobileKeywords.some(keyword => userAgent.includes(keyword));
+      const isSmallScreen = window.innerWidth <= 768;
+      setIsMobile(isMobileDevice || isSmallScreen);
+    };
 
-  // 获取倍数显示文本
-  const getMultiplierDisplay = (camera: CameraDevice) => {
-    if (camera.type === 'front') {
-      return '前置';
-    }
-    return camera.multiplier || '1x';
-  };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  // 显示摄像头切换成功提示
-  const showCameraSwitchToast = useCallback((camera: CameraDevice) => {
-    toast({
-      title: "摄像头已切换",
-      description: `当前使用: ${camera.friendlyName}`,
-      duration: 1000, // 1秒后自动消失
-    });
-  }, [toast]);
-
-  // 加载可用摄像头
-  const loadCameras = useCallback(async () => {
+  // 检查摄像头权限
+  const checkCameraPermission = async (): Promise<boolean> => {
     try {
-      setLoading(true);
-      setError(null);
-
-      const devices = await getCameraDevices();
-      setCameras(devices);
-
-      // 如果启用自动选择且没有选中的摄像头，自动选择推荐的摄像头
-      if (autoSelectOnLoad && !selectedCameraId && devices.length > 0) {
-        const recommendedId = getRecommendedCameraIdFromList(devices);
-        if (recommendedId) {
-          onCameraSelect(recommendedId);
-          const recommendedCamera = devices.find(cam => cam.id === recommendedId);
-          if (recommendedCamera) {
-            console.log('[CameraSelector] Auto-selected recommended camera:', recommendedCamera.friendlyName);
-          }
-        }
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('当前浏览器不支持摄像头访问');
       }
-    } catch (err) {
-      console.error('[CameraSelector] Error loading cameras:', err);
-      setError(err instanceof Error ? err.message : '获取摄像头列表失败');
+
+      // 尝试获取临时权限来检测设备
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'environment',
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        } 
+      });
+      
+      // 立即停止流，我们只是在检查权限
+      stream.getTracks().forEach(track => track.stop());
+      setPermissionGranted(true);
+      return true;
+    } catch (error: any) {
+      console.warn('[CameraSelector] Permission check failed:', error);
+      
+      if (error.name === 'NotAllowedError') {
+        setError('摄像头权限被拒绝。请在浏览器设置中允许访问摄像头。');
+      } else if (error.name === 'NotFoundError') {
+        setError('未找到可用的摄像头设备。');
+      } else if (error.name === 'NotReadableError') {
+        setError('摄像头被其他应用占用或存在硬件问题。');
+      } else {
+        setError('无法访问摄像头：' + (error.message || '未知错误'));
+      }
+      
+      setPermissionGranted(false);
+      return false;
+    }
+  };
+
+  // 获取可用摄像头列表
+  const getCameras = async (): Promise<CameraDevice[]> => {
+    try {
+      const devices = await Html5Qrcode.getCameras();
+      
+      if (!devices || devices.length === 0) {
+        throw new Error('未找到任何摄像头设备');
+      }
+
+      const cameraDevices: CameraDevice[] = devices.map(device => ({
+        id: device.id,
+        label: device.label || `摄像头 ${device.id.substring(0, 8)}`
+      }));
+
+      return cameraDevices;
+    } catch (error: any) {
+      console.error('[CameraSelector] Failed to get cameras:', error);
+      throw new Error('获取摄像头列表失败：' + (error.message || '未知错误'));
+    }
+  };
+
+  // 初始化摄像头
+  const initializeCameras = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 首先检查权限
+      const hasPermission = await checkCameraPermission();
+      if (!hasPermission) {
+        return;
+      }
+
+      // 获取摄像头列表
+      const cameraList = await getCameras();
+      setCameras(cameraList);
+
+      // 自动选择摄像头
+      if (autoSelectOnLoad && cameraList.length > 0) {
+        // 优先选择后置摄像头（通常包含 'back' 或 'environment'）
+        let selectedCamera = cameraList.find(camera => 
+          camera.id.toLowerCase().includes('back') || 
+          camera.id.toLowerCase().includes('environment') ||
+          camera.label.toLowerCase().includes('back') ||
+          camera.label.toLowerCase().includes('后置')
+        );
+
+        // 如果没有找到后置摄像头，选择第一个
+        if (!selectedCamera) {
+          selectedCamera = cameraList[0];
+        }
+
+        onCameraSelect(selectedCamera.id);
+      }
+
+    } catch (error: any) {
+      console.error('[CameraSelector] Initialization failed:', error);
+      setError(error.message || '摄像头初始化失败');
     } finally {
       setLoading(false);
     }
-  }, [selectedCameraId, onCameraSelect, autoSelectOnLoad]);
+  }, [autoSelectOnLoad, onCameraSelect]);
 
-  // 处理摄像头选择
-  const handleCameraSelect = useCallback(async (cameraId: string) => {
-    if (disabled || switching || cameraId === selectedCameraId) return;
-    
-    setSwitching(true);
-    try {
-      // 添加短暂延迟，让用户看到切换效果
-      await new Promise(resolve => setTimeout(resolve, 200));
-      
-      onCameraSelect(cameraId);
-      
-      // 显示切换成功提示
-      const selectedCamera = cameras.find(cam => cam.id === cameraId);
-      if (selectedCamera) {
-        showCameraSwitchToast(selectedCamera);
-      }
-    } finally {
-      setSwitching(false);
-    }
-  }, [disabled, switching, selectedCameraId, onCameraSelect, cameras, showCameraSwitchToast]);
+  // 重试初始化
+  const retryInitialization = useCallback(() => {
+    initializeCameras();
+  }, [initializeCameras]);
 
-  // 重试加载摄像头
-  const retryLoadCameras = useCallback(() => {
-    loadCameras();
-  }, [loadCameras]);
-
-  // 组件挂载时加载摄像头
   useEffect(() => {
-    loadCameras();
-  }, [loadCameras]);
+    // 只在客户端初始化
+    if (typeof window !== 'undefined') {
+      initializeCameras();
+    }
+  }, [initializeCameras]);
 
-  // 加载状态
-  if (loading) {
+  // 决定使用哪种布局
+  const getLayoutType = () => {
+    if (layout === 'auto') {
+      return isMobile ? 'buttons' : 'dropdown';
+    }
+    return layout;
+  };
+
+  // 获取摄像头友好名称
+  const getCameraFriendlyName = (camera: CameraDevice) => {
+    const label = camera.label.toLowerCase();
+    if (label.includes('back') || label.includes('environment') || label.includes('后置')) {
+      return '后置摄像头';
+    } else if (label.includes('front') || label.includes('user') || label.includes('前置')) {
+      return '前置摄像头';
+    }
+    return camera.label;
+  };
+
+  // 渲染按钮布局（移动端友好）
+  const renderButtonLayout = () => {
+    const currentCamera = cameras.find(c => c.id === selectedCameraId);
+    
     return (
-      <div className={`camera-selector ${className}`}>
-        <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
-          <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-          <span className="ml-2 text-sm text-gray-600">正在检测摄像头...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // 错误状态
-  if (error) {
-    return (
-      <div className={`camera-selector ${className}`}>
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="flex items-center justify-between">
-            <span className="text-sm">{error}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={retryLoadCameras}
-              disabled={disabled}
-              className="ml-2"
-            >
-              重试
-            </Button>
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  // 没有检测到摄像头
-  if (cameras.length === 0) {
-    return (
-      <div className={`camera-selector ${className}`}>
-        <Alert>
-          <Camera className="h-4 w-4" />
-          <AlertDescription>
-            未检测到可用的摄像头设备，请确保摄像头已连接并授予权限。
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  // iOS风格的摄像头选择界面
-  const backCameras = cameras.filter(cam => cam.type === 'back');
-  const frontCameras = cameras.filter(cam => cam.type === 'front');
-
-  return (
-    <div className={`camera-selector ${className}`}>
-      <div className="flex flex-col space-y-3">
-        <p className="text-sm font-medium text-gray-700">选择扫描摄像头：</p>
+      <div className="space-y-3">
+        <label className="block text-sm font-medium">
+          摄像头选择 ({cameras.length} 个可用)
+        </label>
         
-        {/* iOS风格的摄像头选择按钮 */}
-        <div className="flex items-center justify-center space-x-3 p-4 bg-black/10 rounded-2xl">
-          
-          {/* 后置摄像头（圆形倍数按钮） */}
-          {backCameras.map((camera) => {
-            const isSelected = camera.id === selectedCameraId;
-            return (
-              <button
-                key={camera.id}
-                onClick={() => handleCameraSelect(camera.id)}
-                disabled={disabled || switching}
-                className={`
-                  relative flex items-center justify-center w-12 h-12 rounded-full text-sm font-medium
-                  transition-all duration-200 ease-in-out
-                  ${isSelected 
-                    ? 'bg-white text-black shadow-lg scale-110' 
-                    : 'bg-black/20 text-white hover:bg-black/30'
-                  }
-                  ${disabled || switching ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                  active:scale-95
-                `}
-                title={camera.friendlyName}
-              >
-                {switching && isSelected ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  getMultiplierDisplay(camera)
-                )}
-                
-                {/* 推荐标识 */}
-                {camera.isRecommended && !isSelected && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                )}
-              </button>
-            );
-          })}
-
-          {/* 分隔线 */}
-          {backCameras.length > 0 && frontCameras.length > 0 && (
-            <div className="w-px h-8 bg-white/30" />
-          )}
-
-          {/* 前置摄像头 */}
-          {frontCameras.map((camera) => {
-            const isSelected = camera.id === selectedCameraId;
-            return (
-              <button
-                key={camera.id}
-                onClick={() => handleCameraSelect(camera.id)}
-                disabled={disabled || switching}
-                className={`
-                  relative flex items-center justify-center w-12 h-12 rounded-lg text-xs font-medium
-                  transition-all duration-200 ease-in-out
-                  ${isSelected 
-                    ? 'bg-white text-black shadow-lg scale-110' 
-                    : 'bg-black/20 text-white hover:bg-black/30'
-                  }
-                  ${disabled || switching ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-                  active:scale-95
-                `}
-                title={camera.friendlyName}
-              >
-                {switching && isSelected ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <div className="flex flex-col items-center">
-                    {getCameraIcon(camera)}
-                    <span className="text-xs mt-1">前置</span>
+        {cameras.length <= 2 ? (
+          // 2个或更少摄像头：显示切换按钮
+          <div className="flex gap-2">
+            {cameras.map((camera) => {
+              const isSelected = camera.id === selectedCameraId;
+              const friendlyName = getCameraFriendlyName(camera);
+              
+              return (
+                <button
+                  key={camera.id}
+                  onClick={() => onCameraSelect(camera.id)}
+                  disabled={disabled}
+                  className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all duration-200 ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    {friendlyName.includes('后置') ? (
+                      <Camera className="w-4 h-4" />
+                    ) : (
+                      <Smartphone className="w-4 h-4" />
+                    )}
+                    <span className="text-sm font-medium">{friendlyName}</span>
                   </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 当前选中摄像头信息 */}
-        {selectedCameraId && (
-          <div className="text-center">
-            {(() => {
-              const selectedCamera = cameras.find(cam => cam.id === selectedCameraId);
-              return selectedCamera ? (
-                <p className="text-sm text-gray-600">
-                  当前使用: <span className="font-medium text-blue-600">{selectedCamera.friendlyName}</span>
-                  {selectedCamera.isRecommended && (
-                    <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">推荐</span>
-                  )}
-                </p>
-              ) : null;
-            })()}
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          // 多个摄像头：显示当前选择和下拉菜单
+          <div className="relative">
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              disabled={disabled}
+              className="w-full px-4 py-3 text-left bg-white border border-gray-300 rounded-lg shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Camera className="w-4 h-4 text-gray-500" />
+                  <span className="text-sm">
+                    {currentCamera ? getCameraFriendlyName(currentCamera) : '请选择摄像头'}
+                  </span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showDropdown ? 'transform rotate-180' : ''}`} />
+              </div>
+            </button>
+            
+            {showDropdown && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                {cameras.map((camera) => (
+                  <button
+                    key={camera.id}
+                    onClick={() => {
+                      onCameraSelect(camera.id);
+                      setShowDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left text-sm hover:bg-gray-50 first:rounded-t-lg last:rounded-b-lg ${
+                      camera.id === selectedCameraId ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      {getCameraFriendlyName(camera).includes('后置') ? (
+                        <Camera className="w-4 h-4" />
+                      ) : (
+                        <Smartphone className="w-4 h-4" />
+                      )}
+                      <span>{getCameraFriendlyName(camera)}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
-
-        {/* 帮助提示 */}
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            <strong>提示：</strong> 
-            {backCameras.length > 0 ? 
-              '建议使用"1x"主摄像头以获得最佳扫描效果' : 
-              '如果扫描效果不佳，请尝试切换到其他摄像头'
-            }
+        
+        {permissionGranted && (
+          <p className="text-xs text-green-600">
+            ✓ 摄像头权限已获取
           </p>
-        </div>
+        )}
       </div>
+    );
+  };
+
+  // 渲染下拉菜单布局（桌面端）
+  const renderDropdownLayout = () => (
+    <div className="camera-selector">
+      <label className="block text-sm font-medium mb-2">
+        摄像头选择 ({cameras.length} 个可用)
+      </label>
+      <select
+        value={selectedCameraId || ''}
+        onChange={(e) => onCameraSelect(e.target.value)}
+        disabled={disabled}
+        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+      >
+        {!selectedCameraId && (
+          <option value="" disabled>
+            请选择摄像头
+          </option>
+        )}
+        {cameras.map((camera) => (
+          <option key={camera.id} value={camera.id}>
+            {getCameraFriendlyName(camera)}
+          </option>
+        ))}
+      </select>
+      
+      {permissionGranted && (
+        <p className="text-xs text-green-600 mt-1">
+          ✓ 摄像头权限已获取
+        </p>
+      )}
     </div>
   );
-};
 
-export default CameraSelector; 
+  if (loading) {
+    return (
+      <div className="camera-selector">
+        <label className="block text-sm font-medium mb-2">
+          摄像头选择
+        </label>
+        <div className="flex items-center space-x-2">
+          <div className="w-4 h-4 bg-gray-300 rounded-full animate-pulse"></div>
+          <span className="text-sm text-gray-500">正在检测摄像头...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="camera-selector">
+        <label className="block text-sm font-medium mb-2">
+          摄像头选择
+        </label>
+        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+          <p className="text-sm text-red-700 mb-2">{error}</p>
+          <button
+            onClick={retryInitialization}
+            className="text-sm text-red-600 hover:text-red-800 underline"
+          >
+            重试
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (cameras.length === 0) {
+    return (
+      <div className="camera-selector">
+        <label className="block text-sm font-medium mb-2">
+          摄像头选择
+        </label>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+          <p className="text-sm text-yellow-700">未找到可用的摄像头设备</p>
+        </div>
+      </div>
+    );
+  }
+
+  const layoutType = getLayoutType();
+  
+  return layoutType === 'buttons' ? renderButtonLayout() : renderDropdownLayout();
+} 
