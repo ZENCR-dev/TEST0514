@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { Medicine } from '@/types/medicine';
 import { bulkUpdatePrices } from '@/services/medicineService';
-import { formatPrice } from '@/utils/helpers';
+import { formatCurrency } from '@/utils/helpers';
 
 interface MedicinePriceAdjustDialogProps {
   isOpen: boolean;
@@ -145,10 +145,10 @@ export function MedicinePriceAdjustDialog({
                             {medicine.chineseName}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-right">
-                            {formatPrice(medicine.pricePerGram)}
+                            {formatCurrency(medicine.pricePerGram)}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-right">
-                            {formatPrice(getAdjustedPrice(medicine.pricePerGram))}
+                            {formatCurrency(getAdjustedPrice(medicine.pricePerGram))}
                           </td>
                         </tr>
                       ))}

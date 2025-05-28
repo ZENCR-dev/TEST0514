@@ -26,12 +26,12 @@ export const formatDate = (dateString: string): string => {
 };
 
 /**
- * 格式化价格
+ * 格式化价格（通用版本）
  * @param price 价格数值
  * @param currency 货币符号
  * @returns 格式化后的价格字符串
  */
-export const formatPrice = (price: number, currency: string = '¥'): string => {
+export const formatCurrency = (price: number, currency: string = '¥'): string => {
   return `${currency}${price.toFixed(2)}`;
 };
 

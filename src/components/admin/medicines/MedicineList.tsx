@@ -2,7 +2,7 @@
  * 中药列表组件
  */
 import React from 'react';
-import { formatPrice } from '@/utils/helpers';
+import { formatCurrency } from '@/utils/helpers';
 import { Medicine } from '@/types/medicine';
 import { Button } from '@/components/ui/button';
 import { 
@@ -160,7 +160,7 @@ export function MedicineList({
               <TableCell>{medicine.englishName}</TableCell>
               <TableCell>{medicine.category || '-'}</TableCell>
               <TableCell>{medicine.property || medicine.properties || '-'}</TableCell>
-              <TableCell className="text-right">{formatPrice(medicine.pricePerGram)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(medicine.pricePerGram)}</TableCell>
               <TableCell className="text-right">{medicine.stock ?? '-'}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">

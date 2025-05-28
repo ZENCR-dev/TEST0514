@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Medicine } from '@/types/medicine';
-import { formatDate, formatPrice } from '@/utils/helpers';
+import { formatDate, formatCurrency } from '@/utils/helpers';
 
 interface MedicineDetailDialogProps {
   medicine: Medicine | null;
@@ -54,7 +54,7 @@ export function MedicineDetailDialog({
               <div className="text-sm">{medicine.pinyinName}</div>
               
               <div className="text-sm text-gray-500">单价：</div>
-              <div className="text-sm">{formatPrice(medicine.pricePerGram)}/克</div>
+              <div className="text-sm">{formatCurrency(medicine.pricePerGram)}/克</div>
               
               <div className="text-sm text-gray-500">库存：</div>
               <div className="text-sm">{medicine.stock ?? '-'} {medicine.stock ? '克' : ''}</div>

@@ -1,9 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { PrescriptionItem } from '@/store/prescriptionStore';
 import TestVersionBanner from "@/components/common/TestVersionBanner";
+import { generateStandardPDF, generatePrintHTML } from '@/utils/pdfGenerator';
 
 interface PrescriptionPreviewProps {
   items: PrescriptionItem[];
@@ -34,10 +33,11 @@ export const PrescriptionPreview: React.FC<PrescriptionPreviewProps> = ({
   
   // 生成处方数据的JSON字符串
   const prescriptionData = JSON.stringify({
+    prescriptionId, // 添加处方ID到QR码数据中
     items: items.map(item => ({
       id: item.medicine.id,
-      name: item.medicine.chineseName,
       quantity: item.quantity
+      // 移除name字段以减少QR码大小，药房端将通过ID查找药品名称
       // 规范: 如果二维码内容未来需要包含价格信息(如item.medicine.pricePerGram)，
       // 也应考虑其模拟性质，以及是否需要在解析端特殊处理或提示。
     })),
@@ -49,103 +49,44 @@ export const PrescriptionPreview: React.FC<PrescriptionPreviewProps> = ({
   const handleDownloadPDF = async () => {
     if (!prescriptionRef.current) return;
     
-    const canvas = await html2canvas(prescriptionRef.current, {
-      scale: 2,
-      useCORS: true,
-    });
-    
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a5'
-    });
-    
-    const imgWidth = 148; // A5 width in mm
-    const imgHeight = canvas.height * imgWidth / canvas.width;
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    
-    // 使用处方编号+日期作为文件名
-    const fileName = `${prescriptionId}_${currentDate.getDate()}-${currentDate.getMonth() + 1}-${currentDate.getFullYear()}.pdf`;
-    pdf.save(fileName);
+    try {
+      // 使用处方编号+日期作为文件名
+      const fileName = `${prescriptionId}_${currentDate.getDate()}-${currentDate.getMonth() + 1}-${currentDate.getFullYear()}.pdf`;
+      
+      await generateStandardPDF(prescriptionRef.current, {
+        filename: fileName,
+        format: 'a5',
+        quality: 2,
+        margin: 10
+      });
+    } catch (error) {
+      console.error('PDF生成失败:', error);
+      alert('PDF生成失败，请重试');
+    }
   };
   
   // 打印处方单
   const handlePrint = async () => {
     if (!prescriptionRef.current) return;
     
-    const canvas = await html2canvas(prescriptionRef.current, {
-      scale: 2,
-      useCORS: true,
-    });
-    
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-    
-    const imgData = canvas.toDataURL('image/png');
-    
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>处方单打印</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 20px;
-              display: flex;
-              justify-content: center;
-            }
-            .print-container {
-              width: 100%;
-              max-width: 595px; /* A4宽度 */
-            }
-            img {
-              width: 100%;
-              height: auto;
-            }
-            @media print {
-              @page {
-                size: auto;
-                margin: 0;
-              }
-              body {
-                padding: 0;
-                margin: 0.5cm;
-              }
-              .print-container {
-                width: 100%;
-                max-width: none;
-              }
-              .no-print {
-                display: none;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="print-container">
-            <div class="no-print" style="text-align: center; margin-bottom: 20px;">
-              <button onclick="window.print()" style="padding: 8px 16px; background: #4a90e2; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">
-                打印
-              </button>
-              <button onclick="window.close()" style="padding: 8px 16px; background: #e2e8f0; color: #1a202c; border: none; border-radius: 4px; cursor: pointer;">
-                关闭
-              </button>
-            </div>
-            <img src="${imgData}" alt="处方单" />
-          </div>
-          <script>
-            window.onload = function() {
-              // 自动打印会在某些浏览器中被阻止，改为手动点击打印按钮
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
+    try {
+      const printHTML = await generatePrintHTML(prescriptionRef.current, {
+        title: '处方单打印',
+        format: 'a5'
+      });
+      
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('无法打开打印窗口，请检查浏览器弹窗拦截设置');
+        return;
+      }
+      
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印准备失败:', error);
+      alert('打印准备失败，请重试');
+    }
   };
   
   // 将药品列表分成三部分的辅助函数

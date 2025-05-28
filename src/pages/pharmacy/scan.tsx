@@ -1,33 +1,98 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { withAuth } from '@/components/auth/withAuth';
 import { PharmacyLayout } from '@/layouts/PharmacyLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Scan, Search, AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
+import { Scan, Search, AlertTriangle, CheckCircle, XCircle, Info, Calculator, DollarSign, FileText, Download, Printer } from 'lucide-react';
 import { QrScanner } from '@/components/pharmacy';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Html5QrcodeResult } from 'html5-qrcode';
+import { parseQrText, isPossiblePrescriptionQR } from '@/utils/qrParser';
+import { calculatePrescription, formatPrice, type PrescriptionCalculationResult } from '@/utils/prescriptionCalculator';
+import { PrescriptionParseStatus } from '@/types/prescription';
+import { generateInvoiceData } from '@/utils/invoiceGenerator';
+import { InvoiceContent } from '@/components/invoice/InvoiceContent';
+import { InvoiceData } from '@/types/invoice';
+import { generateStandardPDF, generatePrintHTML } from '@/utils/pdfGenerator';
 
 function ScanPage() {
   const [prescriptionId, setPrescriptionId] = useState('');
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  
+  // 新增状态：处方解析和计算结果
+  const [parseStatus, setParseStatus] = useState<PrescriptionParseStatus>('idle');
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [calculationResult, setCalculationResult] = useState<PrescriptionCalculationResult | null>(null);
+
+  // 报价单相关状态
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null);
+  const [invoiceGenerating, setInvoiceGenerating] = useState(false);
+  const invoiceContentRef = useRef<HTMLDivElement>(null);
+
+  // 处理QR码解析和计算
+  const processPrescriptionQR = useCallback((qrText: string) => {
+    setParseStatus('parsing');
+    setParseError(null);
+    setCalculationResult(null);
+
+    // 1. 快速检查是否可能是处方QR码
+    if (!isPossiblePrescriptionQR(qrText)) {
+      setParseStatus('error');
+      setParseError('扫描的内容不是有效的处方二维码');
+      return;
+    }
+
+    // 2. 解析QR码内容
+    const parseResult = parseQrText(qrText);
+    if (!parseResult.success) {
+      setParseStatus('error');
+      setParseError(parseResult.error || '解析处方数据失败');
+      return;
+    }
+
+    // 3. 计算处方价格
+    try {
+      const calculation = calculatePrescription(parseResult.data!);
+      setCalculationResult(calculation);
+      setParseStatus('success');
+      
+      if (!calculation.success) {
+        setParseError(calculation.error || '计算处方价格时发生错误');
+      }
+    } catch (error) {
+      console.error('[Prescription Calculation] Error:', error);
+      setParseStatus('error');
+      setParseError('计算处方价格时发生未知错误');
+    }
+  }, []);
 
   const handleManualSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (!prescriptionId.trim()) return;
+    
+    // 清除之前的状态
     setScannedData(null);
     setScanError(null);
-    alert(`将查询处方ID: ${prescriptionId}\n这是一个模拟功能，实际开发中将从后端获取处方信息。`);
-  }, [prescriptionId]);
+    setParseError(null);
+    setCalculationResult(null);
+    
+    // 尝试将输入作为QR码文本处理
+    setScannedData(prescriptionId);
+    processPrescriptionQR(prescriptionId);
+  }, [prescriptionId, processPrescriptionQR]);
 
   const handleScanSuccess = useCallback((decodedText: string, decodedResult: Html5QrcodeResult) => {
     console.log("Scan successful:", decodedText, decodedResult);
     setScannedData(decodedText);
     setScanError(null);
     setShowScanner(false);
-  }, []);
+    
+    // 开始解析和计算处方
+    processPrescriptionQR(decodedText);
+  }, [processPrescriptionQR]);
 
   const handleScanError = useCallback((errorMessage: any) => {
     let errorStringToTest = '';
@@ -60,6 +125,89 @@ function ScanPage() {
     setScanError(displayError);
     setScannedData(null);
   }, []);
+
+  // 生成报价单
+  const handleGenerateInvoice = useCallback(() => {
+    if (!calculationResult || !calculationResult.success) {
+      alert('请先扫描或解析有效的处方');
+      return;
+    }
+
+    setInvoiceGenerating(true);
+    try {
+      // 将calculationResult中的medicineDetails转换为PrescriptionItem格式
+      const prescriptionItems = calculationResult.originalItems.map((item, index) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        copies: calculationResult.copies,
+        instructions: calculationResult.instructions
+      }));
+
+             // 生成报价单数据
+       const invoice = generateInvoiceData(
+         prescriptionItems,
+         15, // 默认处方费15元
+         calculationResult.prescriptionId || `backup-${Date.now()}`, // 使用QR码中的真实处方ID
+         '测试药房' // 可以从用户信息或配置中获取
+       );
+
+      setInvoiceData(invoice);
+      setShowInvoiceModal(true);
+    } catch (error) {
+      console.error('生成报价单失败:', error);
+      alert('生成报价单失败，请重试');
+    } finally {
+      setInvoiceGenerating(false);
+    }
+  }, [calculationResult]);
+
+  // 下载报价单PDF
+  const handleDownloadInvoicePDF = useCallback(async () => {
+    if (!invoiceContentRef.current) {
+      alert('报价单内容未准备好');
+      return;
+    }
+
+    try {
+      await generateStandardPDF(invoiceContentRef.current, {
+        filename: `invoice-${invoiceData?.id || Date.now()}.pdf`,
+        format: 'a4',
+        quality: 2,
+        margin: 15
+      });
+    } catch (error) {
+      console.error('生成PDF失败:', error);
+      alert('PDF生成失败，请重试');
+    }
+  }, [invoiceData]);
+
+  // 打印报价单
+  const handlePrintInvoice = useCallback(async () => {
+    if (!invoiceContentRef.current) {
+      alert('报价单内容未准备好');
+      return;
+    }
+
+    try {
+      const printHTML = await generatePrintHTML(invoiceContentRef.current, {
+        title: `报价单 - ${invoiceData?.id}`,
+        format: 'a4'
+      });
+
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('无法打开打印窗口，请检查浏览器弹窗拦截设置');
+        return;
+      }
+
+      printWindow.document.write(printHTML);
+      printWindow.document.close();
+    } catch (error) {
+      console.error('打印准备失败:', error);
+      alert('打印准备失败，请重试');
+    }
+  }, [invoiceData]);
 
   return (
     <PharmacyLayout title="扫描处方 - 药房管理">
@@ -129,8 +277,25 @@ function ScanPage() {
                 <CheckCircle className="h-4 w-4" />
                 <AlertTitle>扫描成功</AlertTitle>
                 <AlertDescription>
-                  识别到的内容: <pre className="whitespace-pre-wrap bg-muted p-2 rounded-md">{scannedData}</pre>
+                  识别到的内容: <pre className="whitespace-pre-wrap bg-muted p-2 rounded-md text-xs">{scannedData}</pre>
                 </AlertDescription>
+              </Alert>
+            )}
+
+            {/* 处方解析状态显示 */}
+            {parseStatus === 'parsing' && (
+              <Alert variant="default" className="mt-4">
+                <Calculator className="h-4 w-4" />
+                <AlertTitle>正在解析处方</AlertTitle>
+                <AlertDescription>正在解析处方内容并计算价格...</AlertDescription>
+              </Alert>
+            )}
+
+            {parseError && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>解析错误</AlertTitle>
+                <AlertDescription>{parseError}</AlertDescription>
               </Alert>
             )}
           </div>
@@ -138,24 +303,202 @@ function ScanPage() {
           <div className="bg-card p-6 rounded-lg border">
             <div className="flex items-center mb-4">
                 <Search className="h-8 w-8 mr-3 text-primary" />
-                <h2 className="text-xl font-semibold">手动输入处方ID</h2>
+                <h2 className="text-xl font-semibold">手动输入QR码内容</h2>
             </div>
             <form onSubmit={handleManualSearch} className="flex flex-col sm:flex-row gap-2">
               <Input
                 type="text"
-                placeholder="输入处方ID，例如: RX-12345"
+                placeholder="输入处方QR码JSON内容或处方ID"
                 value={prescriptionId}
                 onChange={(e) => setPrescriptionId(e.target.value)}
                 className="flex-grow"
               />
               <Button type="submit" disabled={!prescriptionId.trim()} className="w-full sm:w-auto">
                 <Search className="h-4 w-4 mr-2" />
-                查询处方
+                解析处方
               </Button>
             </form>
           </div>
+
+          {/* 处方计算结果显示 */}
+          {calculationResult && parseStatus === 'success' && (
+            <div className="bg-card p-6 rounded-lg border">
+              <div className="flex items-center mb-4">
+                <DollarSign className="h-8 w-8 mr-3 text-primary" />
+                <h2 className="text-xl font-semibold">处方价格计算结果</h2>
+              </div>
+
+              {/* 基本信息 */}
+              <div className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <span className="font-medium text-gray-600">处方编号:</span>
+                    <span className="ml-2 text-lg font-semibold text-blue-600">{calculationResult.prescriptionId}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">帖数:</span>
+                    <span className="ml-2 text-lg font-semibold">{calculationResult.copies} 帖</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">药品种类:</span>
+                    <span className="ml-2 text-lg font-semibold">{calculationResult.medicineDetails.length} 种</span>
+                  </div>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-600">用法说明:</span>
+                  <p className="mt-1 text-sm bg-muted p-2 rounded">{calculationResult.instructions}</p>
+                </div>
+              </div>
+
+              {/* 药品详情 */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3">药品明细</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300">
+                    <thead>
+                      <tr className="bg-muted">
+                        <th className="border border-gray-300 px-3 py-2 text-left">药品名称</th>
+                        <th className="border border-gray-300 px-3 py-2 text-right">用量(克)</th>
+                        <th className="border border-gray-300 px-3 py-2 text-right">零售价</th>
+                        <th className="border border-gray-300 px-3 py-2 text-right">成本价</th>
+                        <th className="border border-gray-300 px-3 py-2 text-right">状态</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {calculationResult.medicineDetails.map((medicine, index) => {
+                        const originalItem = calculationResult.originalItems[index];
+                        const quantity = originalItem?.quantity || 0;
+                        
+                        return (
+                          <tr key={medicine.id || index} className={!medicine.found ? 'bg-red-50' : ''}>
+                            <td className="border border-gray-300 px-3 py-2">
+                              {medicine.chineseName || originalItem?.name || '未知药品'}
+                              {!medicine.found && <span className="text-red-500 text-xs ml-2">(未找到)</span>}
+                            </td>
+                            <td className="border border-gray-300 px-3 py-2 text-right">
+                              {quantity > 0 ? `${quantity}g` : '-'}
+                            </td>
+                            <td className="border border-gray-300 px-3 py-2 text-right">
+                              {medicine.found ? formatPrice(medicine.pricePerGram, 'NZ$') : '-'}
+                            </td>
+                            <td className="border border-gray-300 px-3 py-2 text-right">
+                              {medicine.found ? formatPrice(medicine.costPrice, 'NZ$') : '-'}
+                            </td>
+                            <td className="border border-gray-300 px-3 py-2 text-right">
+                              {medicine.found ? 
+                                <span className="text-green-600 text-sm">✓ 可供应</span> : 
+                                <span className="text-red-600 text-sm">✗ 缺货</span>
+                              }
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 价格汇总 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-2">单剂价格</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>零售价:</span>
+                      <span className="font-medium">{formatPrice(calculationResult.singleDoseRetailTotal, 'NZ$')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>成本价:</span>
+                      <span className="font-medium">{formatPrice(calculationResult.singleDoseCostTotal, 'NZ$')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-green-800 mb-2">总价 ({calculationResult.copies} 帖)</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>零售总价:</span>
+                      <span className="font-bold text-lg">{formatPrice(calculationResult.totalRetailPrice, 'NZ$')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>成本总价:</span>
+                      <span className="font-bold text-lg text-green-600">{formatPrice(calculationResult.totalCostPrice, 'NZ$')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 未找到的药品警告 */}
+              {calculationResult.notFoundMedicines.length > 0 && (
+                <Alert variant="destructive" className="mt-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>部分药品缺货</AlertTitle>
+                  <AlertDescription>
+                    以下药品在库存中未找到: {calculationResult.notFoundMedicines.join(', ')}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* 操作按钮 */}
+              <div className="flex flex-col sm:flex-row gap-2 mt-6">
+                <Button 
+                  className="flex-1"
+                  onClick={handleGenerateInvoice}
+                  disabled={invoiceGenerating || !calculationResult?.success}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  {invoiceGenerating ? '生成中...' : '生成报价单'}
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  打印处方详情
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  导出Excel
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* 报价单模态框 */}
+      {showInvoiceModal && invoiceData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="text-lg font-semibold">报价单预览</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowInvoiceModal(false)}
+              >
+                <XCircle className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-auto p-4">
+              <div ref={invoiceContentRef}>
+                <InvoiceContent invoice={invoiceData} />
+              </div>
+            </div>
+            
+            <div className="flex justify-end gap-2 p-4 border-t">
+              <Button variant="outline" onClick={handlePrintInvoice}>
+                <Printer className="h-4 w-4 mr-2" />
+                打印
+              </Button>
+              <Button onClick={handleDownloadInvoicePDF}>
+                <Download className="h-4 w-4 mr-2" />
+                下载PDF
+              </Button>
+              <Button variant="outline" onClick={() => setShowInvoiceModal(false)}>
+                关闭
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </PharmacyLayout>
   );
 }
