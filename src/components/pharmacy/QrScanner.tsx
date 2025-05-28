@@ -7,13 +7,15 @@ export interface QrScannerProps {
   onScanFailure?: (error: any) => void;
   isActive: boolean;
   verbose?: boolean;
+  cameraId?: string;
 }
 
 const QrScanner: React.FC<QrScannerProps> = ({ 
   onScanSuccess, 
   onScanFailure, 
   isActive, 
-  verbose = false 
+  verbose = false,
+  cameraId
 }) => {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const scannerContainerId = "qr-reader";
@@ -57,9 +59,9 @@ const QrScanner: React.FC<QrScannerProps> = ({
         formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
         rememberLastUsedCamera: true,
         showTorchButtonIfSupported: false, // 禁用手电筒按钮
-        // 隐藏摄像头选择UI，让库自动选择合适的摄像头
+        // 隐藏摄像头选择UI，使用外部传入的摄像头ID
         showScanTypeSelector: false,
-        defaultDeviceId: 'environment', // 尝试使用后置摄像头
+        defaultDeviceId: cameraId || 'environment', // 使用指定的摄像头或默认后置摄像头
         // 自定义按钮文本
         textIfCameraAccessIsAllowed: "开始扫描",
         textIfCameraAccessIsBlocked: "请求相机权限",
@@ -111,26 +113,10 @@ const QrScanner: React.FC<QrScannerProps> = ({
       scanner.render(handleScanSuccess, handleScanFailure);
       isScanningRef.current = true;
       
-      // 强制隐藏选择摄像头的下拉菜单和手电筒按钮（以防CSS未完全生效）
+      // 清理库自带的UI元素，保持界面简洁
       setTimeout(() => {
         try {
-          const selectElement = document.querySelector('#qr-reader__dashboard_section_csr select');
-          if (selectElement) {
-            (selectElement as HTMLElement).style.display = 'none';
-          }
-          
-          const torchButton = document.querySelector('#qr-reader__dashboard_section_torch button');
-          if (torchButton) {
-            (torchButton as HTMLElement).style.display = 'none';
-          }
-          
-          // 强制隐藏Select Camera文字
-          const selectLabel = document.querySelector('#qr-reader__dashboard_section_csr label');
-          if (selectLabel) {
-            (selectLabel as HTMLElement).style.display = 'none';
-          }
-
-          // Forcefully hide library's default camera control buttons
+          // 隐藏库自带的开始/停止按钮，由外部控制
           const startButton = document.getElementById('html5-qrcode-button-camera-start');
           if (startButton) {
             startButton.style.setProperty('display', 'none', 'important');
@@ -144,7 +130,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
         } catch (error) {
           console.error("[QrScanner] Error hiding UI elements:", error);
         }
-      }, 600); // Increased delay to 600ms
+      }, 600);
     } else if (!isActive && isScanningRef.current) {
       if (verbose) console.log("[QrScanner] Stopping scanner and releasing camera");
       // 完全停止扫描器并释放摄像头，而不只是暂停
@@ -168,7 +154,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
             rememberLastUsedCamera: true,
             showTorchButtonIfSupported: false,
             showScanTypeSelector: false,
-            defaultDeviceId: 'environment',
+            defaultDeviceId: cameraId || 'environment',
             // 自定义按钮文本
             textIfCameraAccessIsAllowed: "开始扫描",
             textIfCameraAccessIsBlocked: "请求相机权限",
@@ -190,7 +176,7 @@ const QrScanner: React.FC<QrScannerProps> = ({
         }
       }, 100);
     }
-  }, [isActive, handleScanSuccess, handleScanFailure, onScanFailure, verbose, stopScannerCompletely]);
+  }, [isActive, handleScanSuccess, handleScanFailure, onScanFailure, verbose, stopScannerCompletely, cameraId]);
   
   return (
     <div className="qr-scanner-container w-full">

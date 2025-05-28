@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Scan, Search, AlertTriangle, CheckCircle, XCircle, Info, Calculator, DollarSign, FileText, Download, Printer } from 'lucide-react';
 import { QrScanner } from '@/components/pharmacy';
+import { CameraSelector } from '@/components/pharmacy/CameraSelector';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Html5QrcodeResult } from 'html5-qrcode';
 import { parseQrText, isPossiblePrescriptionQR } from '@/utils/qrParser';
@@ -20,6 +21,7 @@ function ScanPage() {
   const [scannedData, setScannedData] = useState<string | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [selectedCameraId, setSelectedCameraId] = useState<string>('');
   
   // 新增状态：处方解析和计算结果
   const [parseStatus, setParseStatus] = useState<PrescriptionParseStatus>('idle');
@@ -250,11 +252,21 @@ function ScanPage() {
             )}
 
             <div style={{ display: showScanner ? 'block' : 'none' }}>
+              {/* 摄像头选择器 */}
+              <div className="mb-4">
+                <CameraSelector
+                  onCameraSelect={setSelectedCameraId}
+                  selectedCameraId={selectedCameraId}
+                  disabled={!showScanner}
+                />
+              </div>
+              
               <QrScanner 
                 isActive={showScanner}
                 onScanSuccess={handleScanSuccess} 
                 onScanFailure={handleScanError} 
                 verbose={true}
+                cameraId={selectedCameraId}
               />
               <Button 
                 variant="destructive" 
