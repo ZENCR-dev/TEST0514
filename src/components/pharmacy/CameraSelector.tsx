@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Camera, Smartphone, Monitor, AlertTriangle, CheckCircle } from 'lucide-react';
-import { getCameraDevices, getRecommendedCameraId, type CameraDevice } from '@/utils/cameraUtils';
+import { getCameraDevices, getRecommendedCameraIdFromList, type CameraDevice } from '@/utils/cameraUtils';
 
 export interface CameraSelectorProps {
   onCameraSelect: (cameraId: string) => void;
@@ -21,180 +21,189 @@ export const CameraSelector: React.FC<CameraSelectorProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 获取摄像头设备列表
+  // 获取摄像头图标
+  const getCameraIcon = (type: CameraDevice['type']) => {
+    switch (type) {
+      case 'front':
+        return <Smartphone className="w-4 h-4" />;
+      case 'back':
+        return <Camera className="w-4 h-4" />;
+      default:
+        return <Monitor className="w-4 h-4" />;
+    }
+  };
+
+  // 加载可用摄像头
   const loadCameras = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const devices = await getCameraDevices();
       setCameras(devices);
-      
+
       // 如果没有选中的摄像头，自动选择推荐的摄像头
       if (!selectedCameraId && devices.length > 0) {
-        const recommendedId = await getRecommendedCameraId();
+        const recommendedId = getRecommendedCameraIdFromList(devices);
         if (recommendedId) {
           onCameraSelect(recommendedId);
         }
       }
     } catch (err) {
       console.error('[CameraSelector] Error loading cameras:', err);
-      setError(err instanceof Error ? err.message : '无法获取摄像头设备');
+      setError(err instanceof Error ? err.message : '获取摄像头列表失败');
     } finally {
       setLoading(false);
     }
   }, [selectedCameraId, onCameraSelect]);
 
+  // 处理摄像头选择
+  const handleCameraSelect = useCallback((cameraId: string) => {
+    if (disabled) return;
+    onCameraSelect(cameraId);
+  }, [disabled, onCameraSelect]);
+
+  // 重试加载摄像头
+  const retryLoadCameras = useCallback(() => {
+    loadCameras();
+  }, [loadCameras]);
+
+  // 组件挂载时加载摄像头
   useEffect(() => {
     loadCameras();
   }, [loadCameras]);
 
-  // 获取摄像头图标
-  const getCameraIcon = (camera: CameraDevice) => {
-    switch (camera.type) {
-      case 'front':
-        return Smartphone;
-      case 'back':
-        return Camera;
-      default:
-        return Monitor;
-    }
-  };
-
-  // 处理摄像头选择
-  const handleCameraSelect = (cameraId: string) => {
-    if (!disabled) {
-      onCameraSelect(cameraId);
-    }
-  };
-
-  // 重新扫描摄像头
-  const handleRefresh = () => {
-    loadCameras();
-  };
-
+  // 加载状态
   if (loading) {
     return (
-      <div className={`flex items-center justify-center p-4 ${className}`}>
-        <div className="flex items-center space-x-2 text-muted-foreground">
-          <Camera className="h-4 w-4 animate-pulse" />
-          <span>正在扫描可用摄像头...</span>
+      <div className={`camera-selector ${className}`}>
+        <div className="flex items-center justify-center p-4">
+          <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+          <span className="ml-2 text-sm text-gray-600">正在检测摄像头...</span>
         </div>
       </div>
     );
   }
 
+  // 错误状态
   if (error) {
     return (
-      <Alert variant="destructive" className={className}>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription className="flex items-center justify-between">
-          <span>{error}</span>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefresh}
-            disabled={disabled}
-          >
-            重试
-          </Button>
-        </AlertDescription>
-      </Alert>
+      <div className={`camera-selector ${className}`}>
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>{error}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={retryLoadCameras}
+              disabled={disabled}
+            >
+              重试
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
+  // 没有检测到摄像头
   if (cameras.length === 0) {
     return (
-      <Alert className={className}>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          未检测到可用的摄像头设备。请确保已连接摄像头并授予浏览器访问权限。
-        </AlertDescription>
-      </Alert>
+      <div className={`camera-selector ${className}`}>
+        <Alert>
+          <Camera className="h-4 w-4" />
+          <AlertDescription>
+            未检测到可用的摄像头设备，请确保摄像头已连接并授予权限。
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
-  // 如果只有一个摄像头，显示简化的信息
+  // 只有一个摄像头时，显示简化的信息
   if (cameras.length === 1) {
     const camera = cameras[0];
-    const IconComponent = getCameraIcon(camera);
-    
     return (
-      <div className={`flex items-center justify-between p-3 bg-muted/50 rounded-md ${className}`}>
-        <div className="flex items-center space-x-3">
-          <IconComponent className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <span className="text-sm font-medium">{camera.friendlyName}</span>
-            <div className="flex items-center space-x-1 mt-1">
-              <CheckCircle className="h-3 w-3 text-green-600" />
-              <span className="text-xs text-muted-foreground">已选中</span>
-            </div>
+      <div className={`camera-selector ${className}`}>
+        <div className="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
+          {getCameraIcon(camera.type)}
+          <div className="ml-3 flex-1">
+            <p className="text-sm font-medium text-blue-900">{camera.friendlyName}</p>
+            <p className="text-xs text-blue-600">已自动选择此摄像头</p>
           </div>
+          <CheckCircle className="w-5 h-5 text-blue-600" />
         </div>
       </div>
     );
   }
 
-  // 多个摄像头的选择界面
+  // 多个摄像头时，显示选择界面
   return (
-    <div className={`space-y-2 ${className}`}>
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-foreground">选择摄像头</h3>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleRefresh}
-          disabled={disabled}
-          className="h-8 w-8 p-0"
-        >
-          <Camera className="h-4 w-4" />
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-        {cameras.map((camera) => {
-          const IconComponent = getCameraIcon(camera);
-          const isSelected = camera.id === selectedCameraId;
-          
-          return (
-            <Button
-              key={camera.id}
-              variant={isSelected ? "default" : "outline"}
-              size="sm"
-              onClick={() => handleCameraSelect(camera.id)}
-              disabled={disabled}
-              className="flex items-center justify-start space-x-3 h-auto p-3 text-left"
-            >
-              <IconComponent className={`h-4 w-4 ${isSelected ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
-              <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium truncate ${isSelected ? 'text-primary-foreground' : 'text-foreground'}`}>
-                  {camera.friendlyName}
-                </div>
-                <div className="flex items-center space-x-2 mt-1">
-                  {camera.isRecommended && (
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${
-                      isSelected 
-                        ? 'bg-primary-foreground/20 text-primary-foreground' 
-                        : 'bg-blue-100 text-blue-700'
+    <div className={`camera-selector ${className}`}>
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-gray-700 mb-3">选择扫描摄像头：</p>
+        
+        <div className="grid gap-2">
+          {cameras.map((camera) => {
+            const isSelected = camera.id === selectedCameraId;
+            const isRecommended = camera.isRecommended;
+            
+            return (
+              <Button
+                key={camera.id}
+                variant={isSelected ? "default" : "outline"}
+                className={`w-full justify-start p-4 h-auto relative ${
+                  isSelected ? 'ring-2 ring-blue-500' : ''
+                } ${
+                  isRecommended && !isSelected ? 'border-green-300 bg-green-50' : ''
+                }`}
+                onClick={() => handleCameraSelect(camera.id)}
+                disabled={disabled}
+              >
+                <div className="flex items-center w-full">
+                  {getCameraIcon(camera.type)}
+                  <div className="ml-3 flex-1 text-left">
+                    <p className={`text-sm font-medium ${
+                      isSelected ? 'text-white' : 'text-gray-900'
                     }`}>
+                      {camera.friendlyName}
+                    </p>
+                    <p className={`text-xs ${
+                      isSelected ? 'text-blue-100' : 'text-gray-500'
+                    }`}>
+                      {camera.label}
+                    </p>
+                  </div>
+                  
+                  {/* 推荐标签 */}
+                  {isRecommended && !isSelected && (
+                    <span className="absolute top-1 right-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
                       推荐
                     </span>
                   )}
+                  
+                  {/* 选中标记 */}
                   {isSelected && (
-                    <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                    <CheckCircle className="w-5 h-5 text-white" />
                   )}
                 </div>
-              </div>
-            </Button>
-          );
-        })}
+              </Button>
+            );
+          })}
+        </div>
+
+        {/* 帮助提示 */}
+        <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+          <p className="text-xs text-gray-600">
+            <strong>提示：</strong> 
+            {cameras.some(c => c.type === 'back') ? 
+              '建议选择"后置摄像头"以获得更好的扫描效果。' : 
+              '如果扫描效果不佳，请尝试切换到其他摄像头。'
+            }
+          </p>
+        </div>
       </div>
-      
-      {cameras.some(c => c.isRecommended) && (
-        <p className="text-xs text-muted-foreground mt-2">
-          💡 推荐使用后置摄像头进行二维码扫描以获得最佳效果
-        </p>
-      )}
     </div>
   );
 };

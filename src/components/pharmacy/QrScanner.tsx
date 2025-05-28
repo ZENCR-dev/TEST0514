@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats, Html5QrcodeResult } from 'html5-qrcode';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { Html5Qrcode, Html5QrcodeResult, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 // 注意：CSS已在globals.css中全局导入
 
 export interface QrScannerProps {
@@ -17,181 +17,233 @@ const QrScanner: React.FC<QrScannerProps> = ({
   verbose = false,
   cameraId
 }) => {
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-  const scannerContainerId = "qr-reader";
-  const isScanningRef = useRef<boolean>(false);
-  
-  // 处理成功扫描的回调函数
+  const qrCodeReaderRef = useRef<Html5Qrcode | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [currentCameraId, setCurrentCameraId] = useState<string | undefined>(cameraId);
+
   const handleScanSuccess = useCallback((decodedText: string, decodedResult: Html5QrcodeResult) => {
-    if (verbose) console.log("[QrScanner] Scan successful:", decodedText);
+    if (verbose) {
+      console.log('[QrScanner] Scan success:', decodedText);
+    }
     onScanSuccess(decodedText, decodedResult);
   }, [onScanSuccess, verbose]);
-  
-  // 处理扫描失败的回调函数，过滤掉不重要的错误
-  const handleScanFailure = useCallback((errorMessage: string) => {
-    // 过滤掉正常的"未找到二维码"错误
-    if (errorMessage.includes('NotFoundException') || 
-        errorMessage.includes('No MultiFormat Readers were able to detect the code')) {
-      if (verbose) console.warn(`[QrScanner] QR code not found in current frame: ${errorMessage}`);
-      return;
+
+  const handleScanFailure = useCallback((error: any) => {
+    // 只在详细模式下记录扫描失败（避免控制台刷屏）
+    if (verbose && error) {
+      console.log('[QrScanner] Scan failure:', error);
     }
     
-    if (verbose) console.error("[QrScanner] Scan error:", errorMessage);
     if (onScanFailure) {
-      onScanFailure(errorMessage);
+      onScanFailure(error);
     }
   }, [onScanFailure, verbose]);
-  
-  // 初始化扫描器 - 只创建一次实例
-  useEffect(() => {
-    if (!scannerRef.current) {
-      if (verbose) console.log("[QrScanner] Creating scanner instance");
-      
-      const config = {
-        fps: 10,
-        // 设置动态的扫描框大小
-        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-          const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-          const qrboxSize = Math.floor(minEdge * 0.80); // 使用80%的大小
-          return { width: qrboxSize, height: qrboxSize };
-        },
-        aspectRatio: 1.0, // 保持视频流方形，便于对焦
-        formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-        rememberLastUsedCamera: true,
-        showTorchButtonIfSupported: false, // 禁用手电筒按钮
-        // 隐藏摄像头选择UI，使用外部传入的摄像头ID
-        showScanTypeSelector: false,
-        defaultDeviceId: cameraId || 'environment', // 使用指定的摄像头或默认后置摄像头
-        // 自定义按钮文本
-        textIfCameraAccessIsAllowed: "开始扫描",
-        textIfCameraAccessIsBlocked: "请求相机权限",
-        textIfCameraScanTakingLong: "正在获取相机...",
-        textIfCameraPermissionIsRequired: "需要访问相机以扫描二维码",
-        textIfFileScanningIsNotSupported: "不支持文件扫描",
-        textIfImageScanningIsNotSupported: "不支持图片扫描",
-        textForFileSelectionUiComponent: "扫描图片文件"
-      };
-      
-      scannerRef.current = new Html5QrcodeScanner(
-        scannerContainerId,
-        config,
-        /* 初始化但不自动开始扫描 */ false
-      );
-    }
-    
-    // 组件卸载时完全清理
-    return () => {
-      if (scannerRef.current) {
-        stopScannerCompletely();
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [verbose]);
-  
-  // 完全停止扫描器并释放摄像头
-  const stopScannerCompletely = useCallback(() => {
-    if (scannerRef.current) {
-      if (verbose) console.log("[QrScanner] Completely stopping scanner and releasing camera");
+
+  // 完全停止扫描器
+  const stopScannerCompletely = useCallback(async () => {
+    if (qrCodeReaderRef.current && isScanning) {
       try {
-        // 先暂停扫描器，然后清理DOM
-        scannerRef.current.clear();
-        isScanningRef.current = false;
+        await qrCodeReaderRef.current.stop();
+        if (verbose) {
+          console.log('[QrScanner] Scanner stopped successfully');
+        }
       } catch (error) {
-        console.error("[QrScanner] Error clearing scanner:", error);
+        console.error('[QrScanner] Error stopping scanner:', error);
+      } finally {
+        setIsScanning(false);
       }
     }
-  }, [verbose]);
-  
-  // 根据isActive控制扫描器的启动和停止
-  useEffect(() => {
-    const scanner = scannerRef.current;
-    if (!scanner) return;
-    
-    if (isActive && !isScanningRef.current) {
-      if (verbose) console.log("[QrScanner] Starting scanner");
-      // 重新渲染并启动扫描
-      scanner.render(handleScanSuccess, handleScanFailure);
-      isScanningRef.current = true;
+  }, [isScanning, verbose]);
+
+  // 启动扫描器
+  const startScanner = useCallback(async (targetCameraId?: string) => {
+    if (!qrCodeReaderRef.current || isScanning) {
+      return;
+    }
+
+    try {
+      const finalCameraId = targetCameraId || cameraId || 'environment';
       
-      // 清理库自带的UI元素，保持界面简洁
+      await qrCodeReaderRef.current.start(
+        finalCameraId,
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+          disableFlip: false,
+        },
+        handleScanSuccess,
+        handleScanFailure
+      );
+
+      setIsScanning(true);
+      setCurrentCameraId(finalCameraId);
+      
+      if (verbose) {
+        console.log('[QrScanner] Scanner started with camera:', finalCameraId);
+      }
+
+      // 强制隐藏库默认的UI控件
       setTimeout(() => {
         try {
-          // 隐藏库自带的开始/停止按钮，由外部控制
+          const selectElement = document.querySelector('#qr-reader__dashboard_section_csr select');
+          if (selectElement) {
+            (selectElement as HTMLElement).style.display = 'none';
+          }
+          
+          const torchButton = document.querySelector('#qr-reader__dashboard_section_torch button');
+          if (torchButton) {
+            (torchButton as HTMLElement).style.display = 'none';
+          }
+          
+          const selectLabel = document.querySelector('#qr-reader__dashboard_section_csr label');
+          if (selectLabel) {
+            (selectLabel as HTMLElement).style.display = 'none';
+          }
+
           const startButton = document.getElementById('html5-qrcode-button-camera-start');
           if (startButton) {
-            startButton.style.setProperty('display', 'none', 'important');
+            startButton.style.display = 'none';
           }
 
           const stopButton = document.getElementById('html5-qrcode-button-camera-stop');
           if (stopButton) {
-            stopButton.style.setProperty('display', 'none', 'important');
+            stopButton.style.display = 'none';
           }
-          
-        } catch (error) {
-          console.error("[QrScanner] Error hiding UI elements:", error);
-        }
-      }, 600);
-    } else if (!isActive && isScanningRef.current) {
-      if (verbose) console.log("[QrScanner] Stopping scanner and releasing camera");
-      // 完全停止扫描器并释放摄像头，而不只是暂停
-      stopScannerCompletely();
-      
-      // 在下一帧重新创建扫描器实例，但不启动它
-      setTimeout(() => {
-        if (!isActive && verbose) console.log("[QrScanner] Recreating scanner instance after stop");
-        try {
-          // 重新创建一个新的扫描器实例，以便下次激活时使用
-          const config = {
-            fps: 10,
-            // 设置动态的扫描框大小
-            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-              const qrboxSize = Math.floor(minEdge * 0.80); // 使用80%的大小
-              return { width: qrboxSize, height: qrboxSize };
-            },
-            aspectRatio: 1.0,
-            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-            rememberLastUsedCamera: true,
-            showTorchButtonIfSupported: false,
-            showScanTypeSelector: false,
-            defaultDeviceId: cameraId || 'environment',
-            // 自定义按钮文本
-            textIfCameraAccessIsAllowed: "开始扫描",
-            textIfCameraAccessIsBlocked: "请求相机权限",
-            textIfCameraScanTakingLong: "正在获取相机...",
-            textIfCameraPermissionIsRequired: "需要访问相机以扫描二维码",
-            textIfFileScanningIsNotSupported: "不支持文件扫描",
-            textIfImageScanningIsNotSupported: "不支持图片扫描",
-            textForFileSelectionUiComponent: "扫描图片文件"
-          };
-          
-          scannerRef.current = new Html5QrcodeScanner(
-            scannerContainerId,
-            config,
-            false
-          );
-        } catch (error) {
-          console.error("[QrScanner] Error recreating scanner:", error);
-          if (onScanFailure) onScanFailure(error);
+
+          const fileSelectionButton = document.getElementById('html5-qrcode-button-file-selection');
+          if (fileSelectionButton) {
+            fileSelectionButton.style.display = 'none';
+          }
+
+          const requestPermissionButton = document.getElementById('html5-qrcode-button-camera-permission');
+          if (requestPermissionButton) {
+            requestPermissionButton.style.display = 'none';
+          }
+        } catch (hideError) {
+          console.warn('[QrScanner] Warning: Failed to hide some UI elements:', hideError);
         }
       }, 100);
+
+    } catch (error) {
+      console.error('[QrScanner] Error starting scanner with camera', targetCameraId || cameraId, ':', error);
+      setIsScanning(false);
+      
+      if (onScanFailure) {
+        onScanFailure(error);
+      }
     }
-  }, [isActive, handleScanSuccess, handleScanFailure, onScanFailure, verbose, stopScannerCompletely, cameraId]);
-  
+  }, [cameraId, handleScanSuccess, handleScanFailure, isScanning, onScanFailure, verbose]);
+
+  // 切换摄像头
+  const switchCamera = useCallback(async (newCameraId: string) => {
+    if (verbose) {
+      console.log('[QrScanner] Switching camera from', currentCameraId, 'to', newCameraId);
+    }
+
+    // 先停止当前扫描
+    await stopScannerCompletely();
+    
+    // 等待一小段时间确保摄像头资源释放
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    // 使用新摄像头启动
+    await startScanner(newCameraId);
+  }, [currentCameraId, stopScannerCompletely, startScanner, verbose]);
+
+  // 主要的效果：处理isActive和cameraId变化
+  useEffect(() => {
+    const qrCodeElementId = 'qr-reader';
+
+    if (isActive) {
+      if (!qrCodeReaderRef.current) {
+        // 初始化Html5Qrcode实例
+        qrCodeReaderRef.current = new Html5Qrcode(qrCodeElementId, {
+          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
+          verbose: verbose
+        });
+
+        if (verbose) {
+          console.log('[QrScanner] Html5Qrcode instance created');
+        }
+      }
+
+      if (!isScanning) {
+        startScanner();
+      }
+    } else {
+      stopScannerCompletely();
+    }
+
+    return () => {
+      if (!isActive) {
+        stopScannerCompletely();
+      }
+    };
+  }, [isActive, startScanner, stopScannerCompletely, verbose, cameraId]);
+
+  // 处理摄像头ID变化的专门效果
+  useEffect(() => {
+    if (isActive && cameraId && cameraId !== currentCameraId && qrCodeReaderRef.current) {
+      switchCamera(cameraId);
+    }
+  }, [cameraId, currentCameraId, isActive, switchCamera]);
+
+  // 清理函数
+  useEffect(() => {
+    return () => {
+      if (qrCodeReaderRef.current) {
+        stopScannerCompletely().finally(() => {
+          qrCodeReaderRef.current = null;
+        });
+      }
+    };
+  }, [stopScannerCompletely]);
+
   return (
-    <div className="qr-scanner-container w-full">
+    <div className="qr-scanner-container">
       <div 
-        id={scannerContainerId} 
-        className="w-full overflow-hidden rounded-md"
-        style={{
-          minHeight: '350px', // 增加高度以容纳引导UI
-          position: 'relative',
-          background: '#000' // 添加黑色背景以突出扫描框
+        id="qr-reader" 
+        style={{ 
+          width: '100%', 
+          maxWidth: '400px', 
+          margin: '0 auto',
+          border: '2px solid #ddd',
+          borderRadius: '8px',
+          overflow: 'hidden'
         }}
       />
-      <p className="text-center text-sm text-muted-foreground mt-2">
-        请将二维码置于扫描框中央，保持稳定
-      </p>
+      
+      {/* 隐藏库自带的所有UI控件 */}
+      <style jsx>{`
+        :global(#qr-reader__dashboard_section_csr) {
+          display: none !important;
+        }
+        :global(#qr-reader__dashboard_section_torch) {
+          display: none !important;
+        }
+        :global(#qr-reader__dashboard_section_file) {
+          display: none !important;
+        }
+        :global(#html5-qrcode-button-camera-start) {
+          display: none !important;
+        }
+        :global(#html5-qrcode-button-camera-stop) {
+          display: none !important;
+        }
+        :global(#html5-qrcode-button-file-selection) {
+          display: none !important;
+        }
+        :global(#html5-qrcode-button-camera-permission) {
+          display: none !important;
+        }
+        :global(#qr-reader select) {
+          display: none !important;
+        }
+        :global(#qr-reader__dashboard_section) {
+          display: none !important;
+        }
+      `}</style>
     </div>
   );
 };

@@ -115,6 +115,31 @@ export async function getRecommendedCameraId(): Promise<string | null> {
 }
 
 /**
+ * 从已有的摄像头设备列表中获取推荐的摄像头ID
+ * 优先选择后置摄像头，如果没有则选择第一个可用设备
+ */
+export function getRecommendedCameraIdFromList(cameras: CameraDevice[]): string | null {
+  if (cameras.length === 0) {
+    return null;
+  }
+  
+  // 寻找推荐的摄像头
+  const recommended = cameras.find(camera => camera.isRecommended);
+  if (recommended) {
+    return recommended.id;
+  }
+  
+  // 寻找后置摄像头
+  const backCamera = cameras.find(camera => camera.type === 'back');
+  if (backCamera) {
+    return backCamera.id;
+  }
+  
+  // 默认返回第一个设备
+  return cameras[0].id;
+}
+
+/**
  * 检查是否有多个摄像头设备
  */
 export async function hasMultipleCameras(): Promise<boolean> {
