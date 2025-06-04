@@ -340,6 +340,7 @@ function ScanPage() {
                   disabled={!showScanner}
                   autoSelectOnLoad={false} // 不要自动选择，因为我们已经在页面级别初始化了
                 />
+
               </div>
               
               <QrScanner 

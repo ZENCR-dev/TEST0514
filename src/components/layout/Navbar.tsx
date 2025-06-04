@@ -64,6 +64,7 @@ export function Navbar() {
               variant="outline"
               size="sm"
               onClick={() => setIsLoginModalOpen(true)}
+              className="text-foreground"
             >
               登录
             </Button>
@@ -157,6 +158,7 @@ function AuthStatus({ onLoginClick }: { onLoginClick: () => void }) {
           size="sm"
           onClick={handleLogout}
           disabled={isLoggingOut}
+          className="text-foreground"
         >
           {isLoggingOut ? '登出中...' : '登出'}
         </Button>
@@ -169,6 +171,7 @@ function AuthStatus({ onLoginClick }: { onLoginClick: () => void }) {
       variant="outline"
       size="sm"
       onClick={onLoginClick}
+      className="text-foreground"
     >
       登录
     </Button>
