@@ -36,6 +36,7 @@ export interface UserUpdateData {
   status?: 'active' | 'inactive';
   phone?: string;
   address?: string;
+  hpiNumber?: string;
 }
 
 /**

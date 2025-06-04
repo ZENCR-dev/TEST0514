@@ -15,6 +15,13 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { 
   PlusCircle, 
   Search, 
@@ -27,8 +34,12 @@ import {
   ArrowLeft,
   ArrowRight,
   CheckCircle2,
-  XCircle
+  XCircle,
+  UserCheck
 } from 'lucide-react';
+import { UserEditModal } from '@/components/admin/users/UserEditModal';
+import { UserDeleteDialog } from '@/components/admin/users/UserDeleteDialog';
+import { DoctorApprovalModal } from '@/components/admin/users/DoctorApprovalModal';
 
 // 角色显示名称映射
 const roleNames: Record<UserRole, string> = {
@@ -58,6 +69,12 @@ export default function UsersListPage() {
     page: 1,
     limit: 10
   });
+
+  // Modal状态管理
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [approvalModalOpen, setApprovalModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<ExtendedUser | null>(null);
 
   // 验证用户是否有权限访问管理员界面
   useEffect(() => {
@@ -136,6 +153,51 @@ export default function UsersListPage() {
       month: 'short',
       day: 'numeric'
     }).format(date);
+  };
+
+  // 打开编辑Modal
+  const handleEdit = (user: ExtendedUser) => {
+    setSelectedUser(user);
+    setEditModalOpen(true);
+  };
+
+  // 打开删除Dialog
+  const handleDelete = (user: ExtendedUser) => {
+    setSelectedUser(user);
+    setDeleteDialogOpen(true);
+  };
+
+  // 打开审核Modal
+  const handleApproval = (user: ExtendedUser) => {
+    setSelectedUser(user);
+    setApprovalModalOpen(true);
+  };
+
+  // 处理编辑成功
+  const handleEditSuccess = (updatedUser: ExtendedUser) => {
+    setUsers(prevUsers => 
+      prevUsers.map(u => u.id === updatedUser.id ? updatedUser : u)
+    );
+  };
+
+  // 处理删除成功
+  const handleDeleteSuccess = (deletedUserId: string) => {
+    setUsers(prevUsers => 
+      prevUsers.filter(u => u.id !== deletedUserId)
+    );
+  };
+
+  // 处理审核成功
+  const handleApprovalSuccess = (approvedUser: ExtendedUser) => {
+    setUsers(prevUsers => 
+      prevUsers.map(u => u.id === approvedUser.id ? approvedUser : u)
+    );
+  };
+
+  // 处理重置密码
+  const handleResetPassword = (user: ExtendedUser) => {
+    // TODO: 实现重置密码功能
+    console.log('重置密码:', user.name);
   };
 
   // 加载状态显示
@@ -328,17 +390,41 @@ export default function UsersListPage() {
                       <span className="text-sm">{formatDate(user.createdAt)}</span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" title="编辑">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" title="删除">
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" title="重置密码">
-                          <KeyRound className="h-4 w-4" />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onClick={() => handleEdit(user)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            编辑用户
+                          </DropdownMenuItem>
+                          
+                          {user.role === 'doctor' && user.status === 'inactive' && (
+                            <DropdownMenuItem onClick={() => handleApproval(user)}>
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              审核账户
+                            </DropdownMenuItem>
+                          )}
+                          
+                          <DropdownMenuItem onClick={() => handleResetPassword(user)}>
+                            <KeyRound className="mr-2 h-4 w-4" />
+                            重置密码
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem 
+                            onClick={() => handleDelete(user)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            删除用户
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
@@ -394,6 +480,37 @@ export default function UsersListPage() {
           </div>
         )}
       </div>
+
+      {/* Modal组件 */}
+      <UserEditModal
+        user={selectedUser}
+        open={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onSuccess={handleEditSuccess}
+      />
+
+      <UserDeleteDialog
+        user={selectedUser}
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setSelectedUser(null);
+        }}
+        onSuccess={handleDeleteSuccess}
+      />
+
+      <DoctorApprovalModal
+        doctor={selectedUser}
+        open={approvalModalOpen}
+        onClose={() => {
+          setApprovalModalOpen(false);
+          setSelectedUser(null);
+        }}
+        onSuccess={handleApprovalSuccess}
+      />
     </AdminLayout>
   );
 } 
