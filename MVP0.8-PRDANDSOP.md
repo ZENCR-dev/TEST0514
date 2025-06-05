@@ -34,22 +34,22 @@
 这些功能模块在原始 MVP 0.5 PRD 中被列为"范围外"，但在当前代码库中已被实现或部分实现。考虑到其当前实现状态和对演示的潜在价值，将其纳入 MVP 0.8 Demo 范围。
 
 #### 2.2.1. 管理员用户管理
-- **状态**: UI: ~90%, 交互: ~60%
-- **描述**: 提供了用户列表展示、搜索、过滤、详情查看和创建用户的 UI 界面。部分 Mock 服务已存在。缺少用户编辑、删除、批量操作和医生账户审核的完整前端交互及相应的 Mock 实现。
+- **状态**: 已完善 (已实现用户列表、搜索、过滤、详情、创建、编辑、删除、医生账户审核 Mock)
+- **描述**: 提供了用户管理的全套前端 UI 和 Mock 交互。
 - **在 Demo 中的必要性**: 高。展示平台的多角色管理能力是 Demo 的重要组成部分。
 - **技术栈**: Next.js, React, TypeScript, shadcn/ui (DataTable, Dialog, Form), react-hook-form, zod, Zustand, Mock Service (`src/services/admin/userService.ts`).
 
 #### 2.2.2. 管理员药品管理
-- **状态**: UI: ~80%, 交互: ~40%
-- **描述**: 提供了中药列表展示、搜索、创建药品的 UI 界面。部分 Mock 服务已存在。缺少药品编辑、删除、批量导入/导出、分类管理和价格历史记录的完整前端交互及相应的 Mock 实现。
+- **状态**: 已完成 (已实现药品列表、搜索、创建、编辑、删除 Mock)
+- **描述**: 提供了药品管理的全套前端 UI 和 Mock 交互。
 - **在 Demo 中的必要性**: 中等。展示药品基础数据管理能力。可以作为管理员功能的辅助演示。
 - **技术栈**: Next.js, React, TypeScript, shadcn/ui (DataTable, Form), react-hook-form, zod, Mock Service (`src/services/medicineService.ts`).
 
 #### 2.2.3. 药房处方管理 (扩展)
-- **状态**: UI: ~70%, 交互: ~30%
-- **描述**: 提供了药房处方查询界面框架。已实现了扫描处方后的详情展示和价格计算。缺少完整的处方列表展示、处方状态管理、报价单生成/提交流程、处方历史查看等功能。
+- **状态**: 已完善 (已实现处方列表、扫描处方解析、价格计算、状态切换 Mock、报价单模拟)
+- **描述**: 完善了药房端处方处理的核心流程。
 - **在 Demo 中的必要性**: 高。这是药房端除扫描外的核心流程，是 Demo 的重要组成部分。
-- **技术栈**: Next.js, React, TypeScript, shadcn/ui (DataTable, Input, Button), Zustand, Mock Service (`src/services/pharmacyService.ts` - 需要创建/完善).
+- **技术栈**: Next.js, React, TypeScript, shadcn/ui (DataTable, Input, Button), Zustand, Mock Service (`src/services/pharmacyService.ts`).
 
 #### 2.2.4. 医师工作站扩展功能
 - **状态**: UI: ~30%, 交互: ~10%
@@ -72,34 +72,34 @@
 ### 3.1. 必须补全的核心缺失功能 (优先级 P0)
 
 #### 3.1.1. 患者端药房查找
-- **描述**: 实现一个公开页面，允许患者查找附近的合作药房。包括地图展示和列表展示，支持地理位置获取和地址搜索。
-- **理由**: 这是原始 MVP 0.5 PRD 中明确要求但当前完全缺失的核心功能 (FR2.1)，是连接患者与药房的关键环节。
-- **UI/UX**: 简洁直观的地图和列表视图，易于在移动端使用。
-- **技术栈**: Next.js, React, TypeScript, 地图库 (如 Leaflet + React-Leaflet), 浏览器地理位置 API, Mock Data (`src/mocks/pharmacyData.ts`).
-- **测试要点**: 地图加载、药房标记显示、地理位置获取、地址搜索、列表展示、地图/列表切换、移动端适配。
+- **描述**: 已完成。代码库中已存在相关页面和组件 (`src/pages/pharmacy-finder.tsx`)。
+- **理由**: 已完成。
+- **UI/UX**: 已完成。
+- **技术栈**: 已完成。
+- **测试要点**: 已完成。
 
 ### 3.2. 需要完善交互和 Mock 的现有功能 (优先级 P1)
 
 #### 3.2.1. 药房处方管理完善
-- **描述**: 完善药房处方列表展示（模拟数据）、实现处方状态切换（如待处理 -> 处理中 -> 待配发 -> 已完成）、实现报价单生成预览和提交的 Mock 流程、添加处方历史查看页面框架。
-- **理由**: 完善药房端核心工作流程，使其在 Demo 中更完整和可信。
-- **UI/UX**: 清晰的状态标识和操作按钮，顺畅的报价单流程模拟。
-- **技术栈**: Next.js, React, TypeScript, shadcn/ui (DataTable, Dialog), Zustand, Mock Service (`src/services/pharmacyService.ts`).
-- **测试要点**: 处方列表加载、状态切换流程、报价单生成/提交模拟、历史页面导航。
+- **描述**: 已完成。请参考 2.2.3 节。
+- **理由**: 已完成。
+- **UI/UX**: 已完成。
+- **技术栈**: 已完成。
+- **测试要点**: 已完成。
 
 #### 3.2.2. 管理员用户管理完善
-- **描述**: 实现用户编辑和删除的 Mock 交互（模态框/表单和确认对话框），完善医生账户审核的 UI 和 Mock 流程。
-- **理由**: 使已有的用户管理功能在 Demo 中更具操作性。
-- **UI/UX**: 易于操作的编辑/删除流程，清晰的审核界面。
-- **技术栈**: Next.js, React, TypeScript, shadcn/ui (Dialog, Form), react-hook-form, zod, Mock Service (`src/services/admin/userService.ts`).
-- **测试要点**: 用户编辑/删除模拟、医生审核模拟流程。
+- **描述**: 已完成。请参考 2.2.1 节。
+- **理由**: 已完成。
+- **UI/UX**: 已完成。
+- **技术栈**: 已完成。
+- **测试要点**: 已完成。
 
 #### 3.2.3. 管理员药品管理完善
-- **描述**: 实现药品编辑和删除的 Mock 交互。
-- **理由**: 使已有的药品管理功能具备基本的 CRUD 操作演示能力。
-- **UI/UX**: 药品编辑表单和删除确认。
-- **技术栈**: Next.js, React, TypeScript, shadcn/ui (Dialog, Form), react-hook-form, zod, Mock Service (`src/services/medicineService.ts`).
-- **测试要点**: 药品编辑/删除模拟。
+- **描述**: 已完成。请参考 2.2.2 节。
+- **理由**: 已完成。
+- **UI/UX**: 已完成。
+- **技术栈**: 已完成。
+- **测试要点**: 已完成。
 
 ### 3.3. 可选功能完善 (优先级 P2)
 

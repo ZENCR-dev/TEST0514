@@ -19,7 +19,24 @@ const PharmacyFinderPage = () => {
   const [selectedPharmacy, setSelectedPharmacy] = useState<PharmacyLocation | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 获取用户当前位置
+  // 搜索附近药房
+  const searchNearbyPharmacies = useCallback(async (location: {lat: number; lng: number}) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const results = await PharmacyLocationService.getNearbyPharmacies(location, 50);
+      setPharmacies(results);
+    } catch (err) {
+      console.error('搜索药房失败:', err);
+      setError('搜索药房失败，请稍后重试');
+      setPharmacies([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 获取用户位置
   const getUserLocation = useCallback(() => {
     setIsLocating(true);
     setError(null);
@@ -76,24 +93,7 @@ const PharmacyFinderPage = () => {
       setUserLocation(defaultLocation);
       searchNearbyPharmacies(defaultLocation);
     }
-  }, []);
-
-  // 搜索附近药房
-  const searchNearbyPharmacies = useCallback(async (location: {lat: number; lng: number}) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const results = await PharmacyLocationService.getNearbyPharmacies(location, 50);
-      setPharmacies(results);
-    } catch (err) {
-      console.error('搜索药房失败:', err);
-      setError('搜索药房失败，请稍后重试');
-      setPharmacies([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  }, [searchNearbyPharmacies]);
 
   // 执行搜索
   const handleSearch = useCallback(async () => {
@@ -162,6 +162,53 @@ const PharmacyFinderPage = () => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleSearch]);
+
+  // 获取用户位置并搜索附近药房
+  const getCurrentLocationAndSearch = useCallback(async () => {
+    if (!navigator.geolocation) {
+      setError('您的浏览器不支持地理位置功能');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5分钟缓存
+        });
+      });
+
+      const { latitude, longitude } = position.coords;
+      setUserLocation({ lat: latitude, lng: longitude });
+      
+      await searchNearbyPharmacies({ lat: latitude, lng: longitude });
+    } catch (err) {
+      console.error('获取位置失败:', err);
+      if (err instanceof GeolocationPositionError) {
+        switch (err.code) {
+          case err.PERMISSION_DENIED:
+            setError('位置访问被拒绝，请在浏览器设置中允许位置访问');
+            break;
+          case err.POSITION_UNAVAILABLE:
+            setError('无法获取位置信息');
+            break;
+          case err.TIMEOUT:
+            setError('获取位置超时，请重试');
+            break;
+          default:
+            setError('获取位置失败');
+        }
+      } else {
+        setError('获取位置失败');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [searchNearbyPharmacies]);
 
   return (
     <>

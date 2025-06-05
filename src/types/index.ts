@@ -2,6 +2,9 @@
  * 类型定义统一导出
  */
 
+// 通用类型
+export * from './common';
+
 // 认证相关类型
 export * from './auth';
 
