@@ -26,7 +26,7 @@ export function generateInvoiceData(
       continue; 
     }
 
-    const retailPricePerGram = medicine.pricePerGram;
+    const retailPricePerGram = medicine.basePrice;
     const costPricePerGram = retailPricePerGram * 0.6; // 成本价 60%
     const wholesalePricePerGram = retailPricePerGram * 0.75; // 批发价 75%
     const subtotalCost = costPricePerGram * pItem.quantity;

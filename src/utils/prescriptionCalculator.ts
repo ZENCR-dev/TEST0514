@@ -106,12 +106,18 @@ export function toPharmacyMedicineInfo(medicine: Medicine | null, found: boolean
       id: '',
       sku: '',
       name: '',
-      pinyinName: '',
-      category: '',
-      pricePerGram: 0,
       chineseName: '',
       englishName: '',
       pinyinName: '',
+      description: '',
+      category: '',
+      unit: 'g',
+      requiresPrescription: false,
+      basePrice: 0,
+      metadata: null,
+      status: 'inactive',
+      createdAt: new Date(),
+      updatedAt: new Date(),
       wholesalePrice: 0,
       costPrice: 0,
       found: false
@@ -156,7 +162,7 @@ export function calculatePrescription(prescriptionData: PrescriptionQRData): Pre
       medicineDetails.push(pharmacyInfo);
       
       // 计算该药品的总价（用量 × 单价）
-      const itemRetailTotal = item.quantity * pharmacyInfo.pricePerGram;
+      const itemRetailTotal = item.quantity * pharmacyInfo.basePrice;
       const itemWholesaleTotal = item.quantity * pharmacyInfo.wholesalePrice;
       const itemCostTotal = item.quantity * pharmacyInfo.costPrice;
       

@@ -43,7 +43,7 @@ import { PrescriptionTemplate } from '@/types/prescription';
 // 导入服务
 import { PrescriptionTemplateService } from '@/services/prescriptionTemplateService';
 import { getAllMedicines } from '@/services/medicineService';
-import { initialMedicines } from '@/mocks/medicineData';
+import { mockMedicines } from '@/mocks/medicineData';
 
 /**
  * 处方项目卡片组件
@@ -75,7 +75,7 @@ const PrescriptionItemCard: React.FC<{
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              单价: ¥{item.medicine.pricePerGram}/克
+              单价: ¥{item.medicine.basePrice}/克
             </p>
           </div>
           
@@ -111,7 +111,7 @@ const PrescriptionItemCard: React.FC<{
         </div>
         
         <div className="mt-2 pt-2 border-t text-sm text-muted-foreground">
-          小计: ¥{(item.medicine.pricePerGram * quantity).toFixed(2)}
+          小计: ¥{(item.medicine.basePrice * quantity).toFixed(2)}
         </div>
       </CardContent>
     </Card>
@@ -285,7 +285,7 @@ const CreatePrescriptionPage: NextPage = () => {
       // 添加模板中的药品
       for (const templateItem of template.items) {
         // 查找对应的药品信息
-        const medicine = initialMedicines.find(m => m.id === templateItem.medicineId);
+        const medicine = mockMedicines.find(m => m.id === templateItem.medicineId);
         if (medicine) {
           addItem(medicine, templateItem.defaultQuantity);
         }
@@ -393,8 +393,8 @@ const CreatePrescriptionPage: NextPage = () => {
   };
 
   // 计算总价
-  const totalPrice = items.reduce((sum, item) => 
-    sum + (item.medicine.pricePerGram * item.quantity), 0
+  const totalPrice = items.reduce((sum, item) =>
+    sum + (item.medicine.basePrice * item.quantity), 0
   );
 
   return (

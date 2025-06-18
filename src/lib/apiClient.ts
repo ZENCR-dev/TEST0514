@@ -441,13 +441,70 @@ export class ApiClient {
   private tokenManager: TokenManager;
   private defaultHeaders: Record<string, string>;
 
-  constructor(baseURL: string = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') {
-    this.baseURL = baseURL;
+  constructor(baseURL?: string) {
+    // 支持联调环境切换
+    this.baseURL = baseURL || this.getApiBaseURL();
     this.tokenManager = new TokenManager();
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
+  }
+
+  /**
+   * 获取API基础URL - 支持联调环境切换
+   */
+  private getApiBaseURL(): string {
+    // 优先级：环境变量 > 联调配置 > 默认本地
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+
+    // 联调环境配置
+    if (typeof window !== 'undefined') {
+      const isIntegrationMode = localStorage.getItem('tcm_integration_mode') === 'true';
+      if (isIntegrationMode) {
+        return 'https://staging-api.tcm.onrender.com/api/v1';
+      }
+    }
+
+    // 默认Mock/本地环境
+    return 'http://localhost:3001';
+  }
+
+  /**
+   * 切换到联调环境
+   */
+  switchToIntegrationMode(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tcm_integration_mode', 'true');
+      this.baseURL = 'https://staging-api.tcm.onrender.com/api/v1';
+      console.log('🚀 已切换到联调环境:', this.baseURL);
+    }
+  }
+
+  /**
+   * 切换到Mock环境
+   */
+  switchToMockMode(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tcm_integration_mode', 'false');
+      this.baseURL = 'http://localhost:3001';
+      console.log('🔧 已切换到Mock环境:', this.baseURL);
+    }
+  }
+
+  /**
+   * 获取当前API环境
+   */
+  getCurrentEnvironment(): 'integration' | 'mock' | 'custom' {
+    if (this.baseURL.includes('staging-api.tcm.onrender.com')) {
+      return 'integration';
+    } else if (this.baseURL.includes('localhost:3001')) {
+      return 'mock';
+    } else {
+      return 'custom';
+    }
   }
 
   // ==================== 公共方法 ====================

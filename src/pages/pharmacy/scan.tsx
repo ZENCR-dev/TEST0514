@@ -473,7 +473,7 @@ function ScanPage() {
                               {quantity > 0 ? `${quantity}g` : '-'}
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-right">
-                              {medicine.found ? formatPrice(medicine.pricePerGram, 'NZ$') : '-'}
+                              {medicine.found ? formatPrice(medicine.basePrice, 'NZ$') : '-'}
                             </td>
                             <td className="border border-gray-300 px-3 py-2 text-right">
                               {medicine.found ? formatPrice(medicine.costPrice, 'NZ$') : '-'}

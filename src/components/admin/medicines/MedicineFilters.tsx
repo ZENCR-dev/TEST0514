@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MedicineCategory, MedicineProperty } from '@/types/medicine';
+import { MedicineCategory } from '@/types/medicine';
 import { debounce } from '@/utils/helpers';
 
 // 过滤选项类型
@@ -12,7 +12,7 @@ export interface MedicineFilterOptions {
   query: string;
   category: string;
   property: string;
-  sortBy: 'chineseName' | 'pricePerGram' | 'createdAt';
+  sortBy: 'chineseName' | 'basePrice' | 'createdAt';
   order: 'asc' | 'desc';
 }
 
@@ -104,21 +104,18 @@ export function MedicineFilters({ filters, onChange }: MedicineFiltersProps) {
           </select>
         </div>
         
-        {/* 药性筛选 */}
+        {/* 状态筛选 */}
         <div>
-          <Label htmlFor="property">药性</Label>
+          <Label htmlFor="property">状态</Label>
           <select
             id="property"
             value={filters.property}
             onChange={handlePropertyChange}
             className="w-full mt-1 border border-gray-300 rounded-md p-2"
           >
-            <option value="">所有药性</option>
-            {Object.values(MedicineProperty).map((property) => (
-              <option key={property} value={property}>
-                {property}
-              </option>
-            ))}
+            <option value="">所有状态</option>
+            <option value="active">活跃</option>
+            <option value="inactive">非活跃</option>
           </select>
         </div>
         
@@ -134,7 +131,7 @@ export function MedicineFilters({ filters, onChange }: MedicineFiltersProps) {
                 className="w-full mt-1 border border-gray-300 rounded-md p-2"
               >
                 <option value="chineseName">按名称</option>
-                <option value="pricePerGram">按价格</option>
+                <option value="basePrice">按价格</option>
                 <option value="createdAt">按创建时间</option>
               </select>
             </div>

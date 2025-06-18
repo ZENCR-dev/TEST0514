@@ -78,6 +78,12 @@ export interface LegacyMedicine {
   name?: string;
   pinyin?: string;
   basePrice?: number;
+  description?: string;
+  stock?: number;
+  imageUrl?: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**

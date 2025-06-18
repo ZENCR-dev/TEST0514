@@ -30,7 +30,7 @@ export function legacyToNewMedicine(legacy: LegacyMedicine): Medicine {
     englishName: legacy.englishName,
     pinyinName: legacy.pinyinName,
     sku: sku,
-    description: legacy.description || `${legacy.chineseName}的描述信息`, // 提供默认描述
+    description: `${legacy.chineseName}的描述信息`, // 提供默认描述
     category: legacy.category || '其他中药', // 提供默认分类
     unit: 'g', // 默认单位
     requiresPrescription: false, // 默认不需要处方

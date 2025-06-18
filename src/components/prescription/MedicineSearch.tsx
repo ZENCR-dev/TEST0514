@@ -54,7 +54,7 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
     // 搜索中文名、拼音名和英文名
     const filteredResults = mockMedicines.filter(medicine => 
             (medicine.name || medicine.chineseName || '').includes(searchTerm) ||
-      (medicine.pinyin || medicine.pinyinName || '').includes(lowercaseTerm) ||
+      (medicine.pinyinName || '').includes(lowercaseTerm) ||
       (medicine.englishName || '').toLowerCase().includes(lowercaseTerm)
     ).slice(0, 15); // 增加显示结果数量至15个
     

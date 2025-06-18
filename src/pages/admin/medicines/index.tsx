@@ -48,7 +48,7 @@ export default function MedicinesPage() {
       const result = await getAllMedicines({
         search: filters.query,
         category: filters.category,
-        property: filters.property,
+        status: filters.property,
         page: currentPage,
         limit: itemsPerPage,
         sort: `${filters.sortBy}:${filters.order}`

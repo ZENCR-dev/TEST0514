@@ -159,9 +159,9 @@ export function MedicineList({
               </TableCell>
               <TableCell>{medicine.englishName}</TableCell>
               <TableCell>{medicine.category || '-'}</TableCell>
-              <TableCell>{medicine.property || medicine.properties || '-'}</TableCell>
-              <TableCell className="text-right">{formatCurrency(medicine.pricePerGram)}</TableCell>
-              <TableCell className="text-right">{medicine.stock ?? '-'}</TableCell>
+              <TableCell>{medicine.unit}</TableCell>
+              <TableCell className="text-right">{formatCurrency(medicine.basePrice)}</TableCell>
+              <TableCell className="text-right">{medicine.status}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">
                   {onViewDetail && (

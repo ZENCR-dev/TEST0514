@@ -112,9 +112,9 @@ export interface AdminStats {
 }
 
 /**
- * 药品统计数据
+ * 药品统计数据（管理员视角）
  */
-export interface MedicineStats {
+export interface AdminMedicineStats {
   /** 总药品数量 */
   totalMedicines: number;
   /** 有库存药品数量 */
@@ -136,5 +136,5 @@ export interface SystemStats {
   /** 用户统计 */
   users: AdminStats;
   /** 药品统计 */
-  medicines: MedicineStats;
+  medicines: AdminMedicineStats;
 } 

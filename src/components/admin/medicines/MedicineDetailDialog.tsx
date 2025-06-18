@@ -54,32 +54,39 @@ export function MedicineDetailDialog({
               <div className="text-sm">{medicine.pinyinName}</div>
               
               <div className="text-sm text-gray-500">单价：</div>
-              <div className="text-sm">{formatCurrency(medicine.pricePerGram)}/克</div>
+              <div className="text-sm">{formatCurrency(medicine.basePrice)}/克</div>
               
-              <div className="text-sm text-gray-500">库存：</div>
-              <div className="text-sm">{medicine.stock ?? '-'} {medicine.stock ? '克' : ''}</div>
+              <div className="text-sm text-gray-500">SKU：</div>
+              <div className="text-sm">{medicine.sku}</div>
               
-              <div className="text-sm text-gray-500">药性：</div>
-              <div className="text-sm">{medicine.properties || medicine.property || '-'}</div>
+              <div className="text-sm text-gray-500">单位：</div>
+              <div className="text-sm">{medicine.unit}</div>
               
               <div className="text-sm text-gray-500">分类：</div>
               <div className="text-sm">{medicine.category || '-'}</div>
               
               <div className="text-sm text-gray-500">状态：</div>
               <div className="text-sm">
-                {medicine.isActive !== undefined ? (
-                  medicine.isActive ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      已启用
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      已禁用
-                    </span>
-                  )
+                {medicine.status === 'active' ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    活跃
+                  </span>
                 ) : (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    未知
+                    {medicine.status || '未知'}
+                  </span>
+                )}
+              </div>
+              
+              <div className="text-sm text-gray-500">处方要求：</div>
+              <div className="text-sm">
+                {medicine.requiresPrescription ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    需要处方
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    无需处方
                   </span>
                 )}
               </div>
@@ -90,21 +97,21 @@ export function MedicineDetailDialog({
             <h3 className="text-sm font-medium text-gray-500">其他信息</h3>
             <div className="grid grid-cols-2 gap-2">
               <div className="text-sm text-gray-500">创建时间：</div>
-              <div className="text-sm">{medicine.createdAt ? formatDate(medicine.createdAt) : '-'}</div>
+              <div className="text-sm">{medicine.createdAt ? formatDate(medicine.createdAt.toISOString()) : '-'}</div>
               
               <div className="text-sm text-gray-500">更新时间：</div>
-              <div className="text-sm">{medicine.updatedAt ? formatDate(medicine.updatedAt) : '-'}</div>
+              <div className="text-sm">{medicine.updatedAt ? formatDate(medicine.updatedAt.toISOString()) : '-'}</div>
               
               <div className="text-sm text-gray-500">ID：</div>
               <div className="text-sm text-gray-400">{medicine.id}</div>
             </div>
             
-            {medicine.imageUrl && (
+            {medicine.metadata && (medicine.metadata as any).imageUrl && (
               <div className="mt-4">
                 <h3 className="text-sm font-medium text-gray-500 mb-2">药材图片</h3>
                 <div className="relative h-48 w-full bg-gray-100 rounded-md overflow-hidden">
                   <Image 
-                    src={medicine.imageUrl} 
+                    src={(medicine.metadata as any).imageUrl} 
                     alt={medicine.name || medicine.chineseName || '药品图片'}
                     layout="fill"
                     objectFit="cover"

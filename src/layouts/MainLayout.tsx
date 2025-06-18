@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import { Navbar } from '@/components/layout/Navbar';
+import { EnvironmentSwitcher } from '@/components/common/EnvironmentSwitcher';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -31,6 +32,9 @@ export function MainLayout({ children, title = '中医处方平台' }: MainLayou
             <p>© {new Date().getFullYear()} 中医处方平台</p>
           </div>
         </footer>
+        
+        {/* 联调环境切换器 */}
+        <EnvironmentSwitcher />
       </div>
     </>
   );

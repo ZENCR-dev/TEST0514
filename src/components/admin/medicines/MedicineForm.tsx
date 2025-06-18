@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
-import { Medicine, MedicineCategory, MedicineProperty } from '@/types/medicine';
+import { Medicine, MedicineCategory } from '@/types/medicine';
 
 // 表单验证模式
 const medicineSchema = z.object({
@@ -21,6 +21,7 @@ const medicineSchema = z.object({
   description: z.string().optional(),
   properties: z.string().optional(),
   category: z.string().optional(),
+  requiresPrescription: z.boolean().default(false),
   isActive: z.boolean().default(true),
   imageUrl: z.string().optional(),
 });
@@ -57,7 +58,8 @@ export function MedicineForm({
       stock: 0,
       description: '',
       properties: '平',
-      category: MedicineCategory.OTHER,
+      category: MedicineCategory.OTHER_TCM,
+      requiresPrescription: false,
       isActive: true,
       imageUrl: '',
     }
@@ -78,7 +80,8 @@ export function MedicineForm({
       stock: 0,
       description: '',
       properties: '平',
-      category: MedicineCategory.OTHER,
+      category: MedicineCategory.OTHER_TCM,
+      requiresPrescription: false,
       isActive: true,
       imageUrl: '',
     });
@@ -161,20 +164,15 @@ export function MedicineForm({
           )}
         </div>
 
-        {/* 药性 */}
-        <div>
-          <Label htmlFor="properties">药性</Label>
-          <select
-            id="properties"
-            {...register('properties')}
-            className="w-full border border-gray-300 rounded-md p-2"
-          >
-            {Object.values(MedicineProperty).map((property) => (
-              <option key={property} value={property}>
-                {property}
-              </option>
-            ))}
-          </select>
+        {/* 处方要求 */}
+        <div className="flex items-center">
+          <input
+            id="requiresPrescription"
+            type="checkbox"
+            {...register('requiresPrescription')}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <Label htmlFor="requiresPrescription" className="ml-2">需要处方</Label>
         </div>
 
         {/* 分类 */}
