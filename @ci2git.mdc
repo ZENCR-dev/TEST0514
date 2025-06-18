@@ -1,0 +1,68 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# 本地CI自检流程 - 上传Git前必须执行
+
+## 执行顺序（必须按顺序完成，全部通过后才能上传）
+
+### 1. 代码质量检查
+```bash
+npm run lint
+```
+**要求**: 0个错误，警告可接受但需评估
+
+### 2. TypeScript类型检查
+```bash
+npx tsc --noEmit
+```
+**要求**: 0个类型错误
+
+### 3. 构建验证（关键步骤）
+```bash
+npm run build
+```
+**要求**: 
+- 构建成功完成
+- 无SSR错误（特别是localStorage相关）
+- 静态页面生成成功
+- 所有路由构建正常
+
+### 4. 测试执行
+```bash
+npm test
+```
+**要求**: 关键测试通过，可接受部分非关键测试失败
+
+### 5. Git操作
+只有以上所有步骤通过后才执行：
+```bash
+git add .
+git commit -m "描述性提交信息"
+git push
+```
+
+## 常见问题及解决方案
+
+### SSR localStorage错误
+- **症状**: `ReferenceError: localStorage is not defined`
+- **解决**: 确保所有localStorage调用都有`typeof window !== 'undefined'`检查
+- **位置**: authStore, apiClient, hooks, components
+
+### TypeScript编译错误
+- **症状**: 类型不匹配、接口缺失
+- **解决**: 检查types/目录下的接口定义，确保与实际使用一致
+
+### 构建失败
+- **症状**: `npm run build`失败
+- **解决**: 检查页面组件的SSR兼容性，修复服务端渲染问题
+
+## 成功标准
+- ✅ ESLint检查通过（0错误）
+- ✅ TypeScript编译成功
+- ✅ 构建成功完成
+- ✅ 无SSR相关错误
+- ✅ 静态页面生成正常
+
+**重要**: 只有本地CI全部通过，远程GitHub Actions才能成功运行！
