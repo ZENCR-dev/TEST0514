@@ -5,7 +5,7 @@
 
 import { Medicine } from '@/types/medicine';
 import { PrescriptionQRData, PrescriptionQRItem } from '@/types/prescription';
-import { initialMedicines } from '@/mocks/medicineData';
+import { mockMedicines } from '@/mocks/medicineData';
 
 /**
  * 药房端药品信息（包含批发价）
@@ -59,7 +59,7 @@ export interface PrescriptionCalculationResult {
  * @returns 药品信息，如果未找到则返回null
  */
 export function findMedicineById(medicineId: string): Medicine | null {
-  return initialMedicines.find(medicine => medicine.id === medicineId) || null;
+  return mockMedicines.find(medicine => medicine.id === medicineId) || null;
 }
 
 /**
@@ -70,10 +70,12 @@ export function findMedicineById(medicineId: string): Medicine | null {
 export function findMedicineByName(medicineName: string): Medicine | null {
   const searchName = medicineName.toLowerCase().trim();
   
-  return initialMedicines.find(medicine => 
-    (medicine.name || medicine.chineseName || '').toLowerCase() === searchName ||
-    (medicine.englishName || '').toLowerCase() === searchName ||
-    (medicine.pinyin || medicine.pinyinName || '').toLowerCase() === searchName
+  return mockMedicines.find(medicine => 
+    medicine.name.toLowerCase() === searchName ||
+    medicine.chineseName.toLowerCase() === searchName ||
+    medicine.englishName.toLowerCase() === searchName ||
+    medicine.pinyinName.toLowerCase() === searchName ||
+    medicine.sku.toLowerCase() === searchName
   ) || null;
 }
 
@@ -104,7 +106,7 @@ export function toPharmacyMedicineInfo(medicine: Medicine | null, found: boolean
       id: '',
       sku: '',
       name: '',
-      pinyin: '',
+      pinyinName: '',
       category: '',
       pricePerGram: 0,
       chineseName: '',
@@ -116,7 +118,7 @@ export function toPharmacyMedicineInfo(medicine: Medicine | null, found: boolean
     };
   }
 
-  const { wholesalePrice, costPrice } = calculateWholesaleAndCostPrices(medicine.pricePerGram);
+  const { wholesalePrice, costPrice } = calculateWholesaleAndCostPrices(medicine.basePrice);
   
   return {
     ...medicine,

@@ -1,10 +1,10 @@
 import { PrescriptionQRItem } from "@/types/prescription";
 import { InvoiceData, InvoiceItem } from "@/types/invoice";
-import { initialMedicines } from "@/mocks/medicineData"; 
+import { mockMedicines } from "@/mocks/medicineData"; 
 
 // 查找药品信息
 function findMedicineById(id: string) {
-  return initialMedicines.find(medicine => medicine.id === id);
+  return mockMedicines.find(medicine => medicine.id === id);
 }
 
 // 生成报价单数据

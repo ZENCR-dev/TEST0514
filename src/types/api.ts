@@ -19,7 +19,7 @@ export interface PaginationMeta {
   /** 每页条数 */
   limit: number;
   /** 总条数 */
-  totalItems: number;
+  total: number;
   /** 总页数 */
   totalPages: number;
   /** 是否有下一页 */

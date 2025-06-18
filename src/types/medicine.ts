@@ -1,141 +1,182 @@
 /**
- * 中药管理系统数据模型
- * 更新版本：支持后端确认的API格式
+ * 药品相关类型定义
+ * 基于后端团队确认的 Supabase Medicine 表结构规范
+ * 
+ * @version 2.0
+ * @date 2025-01-21
+ * @description 完全匹配后端 Supabase medicines 表结构
  */
 
 import { StandardApiResponse, PaginatedApiResponse, PaginationParams } from './api';
 
 /**
- * 中药分类枚举
- */
-export enum MedicineCategory {
-  TONIFYING_QI = "补气", // 补气药
-  TONIFYING_BLOOD = "补血", // 补血药
-  TONIFYING_YIN = "补阴", // 补阴药
-  TONIFYING_YANG = "补阳", // 补阳药
-  DISPELLING_WIND = "祛风", // 祛风药
-  CLEARING_HEAT = "清热", // 清热药
-  DISPELLING_DAMPNESS = "祛湿", // 祛湿药
-  RESOLVING_PHLEGM = "化痰", // 化痰药
-  REGULATING_QI = "理气", // 理气药
-  PROMOTING_DIGESTION = "消导", // 消食药
-  WARMING_INTERIOR = "温里", // 温里药
-  PROMOTING_BLOOD = "活血", // 活血化瘀药
-  STOPPING_BLEEDING = "止血", // 止血药
-  CALMING_LIVER = "平肝", // 平肝药
-  ASTRINGENT = "收敛", // 收敛药
-  TRANQUILIZING = "安神", // 安神药
-  AROMATIC_OPENING = "芳香开窍", // 芳香开窍药
-  EXPELLING_PARASITES = "驱虫", // 驱虫药
-  EXTERNAL_USE = "外用", // 外用药
-  OTHER = "其他" // 其他类别
-}
-
-/**
- * 中药药性枚举
- */
-export enum MedicineProperty {
-  WARM = "温", // 温性
-  HOT = "热", // 热性
-  COLD = "寒", // 寒性
-  COOL = "凉", // 凉性
-  NEUTRAL = "平" // 平性
-}
-
-/**
- * 药品类型定义（新版本）
- * 匹配后端确认的药品对象结构：{id, sku, name, pinyin, category, pricePerGram}
- * 同时保持向后兼容性
+ * 药品基础接口 - 匹配后端 Supabase medicines 表结构
+ * 
+ * @interface Medicine
+ * @description 所有字段都是必填的，与后端 Supabase 表结构100%一致
  */
 export interface Medicine {
-  /** 药品唯一标识符 */
+  /** 主键ID (cuid格式) */
   id: string;
-  /** 药品SKU编码 */
-  sku: string;
-  /** 中文名称（主要显示名称） */
+  
+  /** 药品名称 (通常与chineseName相同) */
   name: string;
-  /** 拼音名称，用于搜索 */
-  pinyin: string;
-  /** 药品分类 */
+  
+  /** 中文名称 (必填) */
+  chineseName: string;
+  
+  /** 英文名称 (必填) */
+  englishName: string;
+  
+  /** 拼音名称 (自动生成) */
+  pinyinName: string;
+  
+  /** SKU代码 (基于拼音首字母，如: DG, CX, SDH) */
+  sku: string;
+  
+  /** 描述信息 */
+  description: string;
+  
+  /** 药品分类 (补益药, 活血药, 理气药等) */
   category: string;
-  /** 每克价格（必须为数字类型） */
-  pricePerGram: number;
   
-  // 向后兼容字段
-  /** @deprecated 使用 name 字段 */
-  chineseName?: string;
-  /** @deprecated 使用 pinyin 字段 */
-  pinyinName?: string;
-  /** @deprecated 使用 property 字段 */
-  properties?: string;
+  /** 计量单位 (默认: "g") */
+  unit: string;
   
-  // 可选的扩展字段
-  /** 英文名称（可选） */
-  englishName?: string;
-  /** 药性（可选） */
-  property?: string;
-  /** 库存量（克）（可选） */
-  stock?: number;
-  /** 药品描述（可选） */
-  description?: string;
-  /** 药品图片URL（可选） */
-  imageUrl?: string;
-  /** 是否启用（可选） */
-  isActive?: boolean;
-  /** 创建时间（可选） */
-  createdAt?: string;
-  /** 更新时间（可选） */
-  updatedAt?: string;
+  /** 是否需要处方 (boolean类型) */
+  requiresPrescription: boolean;
+  
+  /** 基础价格 (number类型，单位: 元/克) */
+  basePrice: number;
+  
+  /** 元数据 (JSON格式) */
+  metadata: object | null;
+  
+  /** 状态 (默认: "active") */
+  status: string;
+  
+  /** 创建时间 (ISO 8601格式) */
+  createdAt: Date;
+  
+  /** 更新时间 (ISO 8601格式) */
+  updatedAt: Date;
 }
 
 /**
- * 药品类型定义（向后兼容）
+ * 向后兼容的药品接口 (已废弃)
  * @deprecated 请使用新的 Medicine 接口
  */
 export interface LegacyMedicine {
   id: string;
-  chineseName: string;  // 中文名
-  englishName: string;  // 英文名
-  pinyinName: string;   // 拼音名
-  pricePerGram: number; // 零售价（元/克）
-  category?: string;    // 分类（可选）
-  property?: string;    // 药性（可选）
-  
-  // 新增字段
-  stock?: number;        // 库存量（克）
-  properties?: string;   // 药性（与property字段兼容）
-  description?: string;  // 药品描述
-  imageUrl?: string;     // 药品图片URL
-  isActive?: boolean;    // 是否启用
-  createdAt?: string;    // 创建时间
-  updatedAt?: string;    // 更新时间
+  chineseName: string;
+  englishName: string;
+  pinyinName: string;
+  pricePerGram: number;
+  properties?: string;
+  category?: string;
+  sku?: string;
+  name?: string;
+  pinyin?: string;
+  basePrice?: number;
 }
 
 /**
- * 中药创建接口
+ * 药品数据验证函数
+ * 基于后端团队提供的验证逻辑
  */
-export type MedicineCreateData = Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>;
+export function validateMedicineData(medicine: any): medicine is Medicine {
+  return (
+    typeof medicine.id === 'string' &&
+    typeof medicine.name === 'string' &&
+    typeof medicine.chineseName === 'string' &&
+    typeof medicine.englishName === 'string' &&
+    typeof medicine.pinyinName === 'string' &&
+    typeof medicine.sku === 'string' &&
+    typeof medicine.description === 'string' &&
+    typeof medicine.category === 'string' &&
+    typeof medicine.unit === 'string' &&
+    typeof medicine.basePrice === 'number' &&
+    typeof medicine.requiresPrescription === 'boolean' &&
+    typeof medicine.status === 'string' &&
+    medicine.unit === 'g' &&
+    medicine.status === 'active'
+  );
+}
 
 /**
- * 中药更新接口
+ * SKU 格式验证函数
+ * 验证 SKU 是否符合拼音首字母格式
  */
-export type MedicineUpdateData = Partial<Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>>;
+export function validateSkuFormat(sku: string): boolean {
+  // SKU 应该是 1-4 个大写字母，基于拼音首字母
+  const skuPattern = /^[A-Z]{1,4}$/;
+  return skuPattern.test(sku);
+}
 
 /**
- * 中药搜索参数（新版本）
- * 匹配后端API参数格式
+ * 药品分类标准枚举
+ * 基于后端确认的分类标准
+ */
+export enum MedicineCategory {
+  TONIFYING = "补益药",          // tonifying medicines
+  BLOOD_ACTIVATING = "活血药",   // blood-activating medicines
+  QI_REGULATING = "理气药",      // qi-regulating medicines
+  PHLEGM_RESOLVING = "化痰药",   // phlegm-resolving medicines
+  OTHER_TCM = "其他中药"         // other TCM medicines
+}
+
+/**
+ * 药品创建数据接口
+ */
+export interface MedicineCreateData {
+  name: string;
+  chineseName: string;
+  englishName: string;
+  pinyinName: string;
+  sku: string;
+  description: string;
+  category: string;
+  unit?: string;                 // 默认 "g"
+  requiresPrescription?: boolean; // 默认 false
+  basePrice: number;
+  metadata?: object | null;       // 默认 null
+  status?: string;               // 默认 "active"
+}
+
+/**
+ * 药品更新数据接口
+ */
+export interface MedicineUpdateData {
+  name?: string;
+  chineseName?: string;
+  englishName?: string;
+  pinyinName?: string;
+  sku?: string;
+  description?: string;
+  category?: string;
+  unit?: string;
+  requiresPrescription?: boolean;
+  basePrice?: number;
+  metadata?: object | null;
+  status?: string;
+}
+
+/**
+ * 药品搜索参数接口
  */
 export interface MedicineSearchParams extends PaginationParams {
   /** 搜索关键词(中文名、拼音、英文) */
   search?: string;
   /** 按分类筛选 */
   category?: string;
-  /** 按药性筛选 */
-  property?: string;
   /** 最低价格 */
   minPrice?: number;
   /** 最高价格 */
   maxPrice?: number;
+  /** 是否需要处方 */
+  requiresPrescription?: boolean;
+  /** 状态筛选 */
+  status?: string;
 }
 
 /**
@@ -150,7 +191,7 @@ export interface MedicineSearchResponseData {
     pagination: {
       page: number;
       limit: number;
-      totalItems: number;
+      total: number;
       totalPages: number;
       hasNextPage: boolean;
       hasPrevPage: boolean;
@@ -169,51 +210,82 @@ export type MedicineSearchApiResponse = StandardApiResponse<MedicineSearchRespon
 export type MedicineDetailApiResponse = StandardApiResponse<Medicine>;
 
 /**
- * 中药搜索参数（向后兼容）
- * @deprecated 请使用 MedicineSearchParams
+ * 药品列表API响应类型（分页）
  */
-export interface LegacyMedicineSearchParams {
-  query?: string;       // 搜索关键词(中文名、拼音、英文)
-  category?: string;    // 按分类筛选
-  property?: string;    // 按药性筛选
-  minPrice?: number;    // 最低价格
-  maxPrice?: number;    // 最高价格
-  page?: number;        // 页码
-  limit?: number;       // 每页数量
-  sortBy?: 'chineseName' | 'pricePerGram' | 'createdAt'; // 排序字段
-  order?: 'asc' | 'desc'; // 排序方向
-}
+export type MedicineListApiResponse = PaginatedApiResponse<Medicine>;
 
 /**
- * 中药分页结果（向后兼容）
- * @deprecated 请使用 MedicineSearchResponseData
+ * 药品创建API响应类型
  */
-export interface PaginatedMedicines {
-  data: Medicine[];     // 数据
-  total: number;        // 总数
-  page: number;         // 当前页
-  limit: number;        // 每页数量
-  totalPages: number;   // 总页数
-}
+export type MedicineCreateApiResponse = StandardApiResponse<Medicine>;
 
 /**
- * 中药导入结果
+ * 药品更新API响应类型
+ */
+export type MedicineUpdateApiResponse = StandardApiResponse<Medicine>;
+
+/**
+ * 药品删除API响应类型
+ */
+export interface MedicineDeleteResponseData {
+  id: string;
+  message: string;
+}
+
+export type MedicineDeleteApiResponse = StandardApiResponse<MedicineDeleteResponseData>;
+
+/**
+ * 药品批量操作响应数据
+ */
+export interface MedicineBatchResponseData {
+  successful: string[];
+  failed: {
+    id: string;
+    error: string;
+  }[];
+  total: number;
+  successCount: number;
+  failureCount: number;
+}
+
+export type MedicineBatchApiResponse = StandardApiResponse<MedicineBatchResponseData>;
+
+/**
+ * 药品导入结果
  */
 export interface MedicineImportResult {
-  success: number;      // 成功数量
-  failed: number;       // 失败数量
-  errors: {             // 错误信息
-    index: number;      // 错误行索引
-    message: string;    // 错误信息
+  successful: number;
+  failed: number;
+  errors: {
+    row: number;
+    message: string;
+    data?: any;
   }[];
 }
 
+export type MedicineImportApiResponse = StandardApiResponse<MedicineImportResult>;
+
 /**
- * 中药导出格式
+ * 药品导出格式枚举
  */
 export enum MedicineExportFormat {
   CSV = 'csv',
   EXCEL = 'excel',
-  JSON = 'json',
-  MARKDOWN = 'markdown'
-} 
+  JSON = 'json'
+}
+
+/**
+ * 药品统计数据
+ */
+export interface MedicineStats {
+  total: number;
+  byCategory: Record<string, number>;
+  byStatus: Record<string, number>;
+  averagePrice: number;
+  priceRange: {
+    min: number;
+    max: number;
+  };
+}
+
+export type MedicineStatsApiResponse = StandardApiResponse<MedicineStats>; 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { initialMedicines } from '@/mocks/medicineData';
+import { mockMedicines } from '@/mocks/medicineData';
 import { Medicine } from '@/types/medicine';
 
 interface MedicineSearchProps {
@@ -52,7 +52,7 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
     const lowercaseTerm = searchTerm.toLowerCase();
     
     // 搜索中文名、拼音名和英文名
-    const filteredResults = initialMedicines.filter(medicine => 
+    const filteredResults = mockMedicines.filter(medicine => 
             (medicine.name || medicine.chineseName || '').includes(searchTerm) ||
       (medicine.pinyin || medicine.pinyinName || '').includes(lowercaseTerm) ||
       (medicine.englishName || '').toLowerCase().includes(lowercaseTerm)

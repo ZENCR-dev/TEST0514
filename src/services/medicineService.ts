@@ -1,5 +1,9 @@
 /**
- * 中药管理服务
+ * 药品管理服务
+ * 基于后端团队确认的 Supabase Medicine 表结构规范
+ * 
+ * @version 2.0
+ * @date 2025-01-21
  */
 import { 
   Medicine, 
@@ -7,16 +11,18 @@ import {
   MedicineSearchParams, 
   MedicineUpdateData,
   MedicineSearchApiResponse,
-  MedicineDetailApiResponse 
+  MedicineDetailApiResponse,
+  validateMedicineData 
 } from '@/types/medicine';
 import { delay, generateId } from '@/utils/helpers';
-import { initialMedicines } from '@/mocks/medicineData';
+import { mockMedicines } from '@/mocks/medicineData';
+import { smartConvertToNew, legacyToNewMedicine } from '@/types/adapters';
 
 // 模拟存储
-let allMedicines: Medicine[] = [...initialMedicines];
+let allMedicines: Medicine[] = [...mockMedicines];
 
 /**
- * 获取所有中药列表(带分页和筛选)
+ * 获取所有药品列表(带分页和筛选)
  */
 export async function getAllMedicines(params: MedicineSearchParams = {}): Promise<Medicine[]> {
   await delay(600);
@@ -24,29 +30,29 @@ export async function getAllMedicines(params: MedicineSearchParams = {}): Promis
   const {
     search = '',
     category,
-    property,
     minPrice,
     maxPrice,
+    requiresPrescription,
+    status,
     page = 1,
     limit = 10,
     sort = 'name:asc'
   } = params;
   
   // 解析排序参数
-  const [sortBy = 'name', order = 'asc'] = sort.split(':') as ['name' | 'pricePerGram' | 'createdAt', 'asc' | 'desc'];
-  
-  // 为了向后兼容，将query映射到search
-  const query = search;
+  const [sortBy = 'name', order = 'asc'] = sort.split(':') as ['name' | 'basePrice' | 'createdAt', 'asc' | 'desc'];
   
   // 过滤
   let filtered = [...allMedicines];
   
-  if (query) {
-    const lowercaseQuery = query.toLowerCase();
+  if (search) {
+    const lowercaseQuery = search.toLowerCase();
     filtered = filtered.filter(med => 
-      (med.name || med.chineseName || '').toLowerCase().includes(lowercaseQuery) ||
-      (med.englishName || '').toLowerCase().includes(lowercaseQuery) ||
-      (med.pinyin || med.pinyinName || '').toLowerCase().includes(lowercaseQuery)
+      med.name.toLowerCase().includes(lowercaseQuery) ||
+      med.chineseName.toLowerCase().includes(lowercaseQuery) ||
+      med.englishName.toLowerCase().includes(lowercaseQuery) ||
+      med.pinyinName.toLowerCase().includes(lowercaseQuery) ||
+      med.sku.toLowerCase().includes(lowercaseQuery)
     );
   }
   
@@ -54,16 +60,20 @@ export async function getAllMedicines(params: MedicineSearchParams = {}): Promis
     filtered = filtered.filter(med => med.category === category);
   }
   
-  if (property) {
-    filtered = filtered.filter(med => med.property?.includes(property));
+  if (requiresPrescription !== undefined) {
+    filtered = filtered.filter(med => med.requiresPrescription === requiresPrescription);
+  }
+  
+  if (status) {
+    filtered = filtered.filter(med => med.status === status);
   }
   
   if (minPrice !== undefined) {
-    filtered = filtered.filter(med => med.pricePerGram >= minPrice);
+    filtered = filtered.filter(med => med.basePrice >= minPrice);
   }
   
   if (maxPrice !== undefined) {
-    filtered = filtered.filter(med => med.pricePerGram <= maxPrice);
+    filtered = filtered.filter(med => med.basePrice <= maxPrice);
   }
   
   // 排序
@@ -75,6 +85,12 @@ export async function getAllMedicines(params: MedicineSearchParams = {}): Promis
       return order === 'asc' 
         ? aVal.localeCompare(bVal) 
         : bVal.localeCompare(aVal);
+    }
+    
+    if (aVal instanceof Date && bVal instanceof Date) {
+      return order === 'asc' 
+        ? aVal.getTime() - bVal.getTime() 
+        : bVal.getTime() - aVal.getTime();
     }
     
     return order === 'asc' 
@@ -93,7 +109,7 @@ export async function getAllMedicines(params: MedicineSearchParams = {}): Promis
 }
 
 /**
- * 根据ID获取中药
+ * 根据ID获取药品
  */
 export async function getMedicineById(id: string): Promise<Medicine | null> {
   await delay(300);
@@ -101,17 +117,21 @@ export async function getMedicineById(id: string): Promise<Medicine | null> {
 }
 
 /**
- * 创建新中药
+ * 创建新药品
  */
 export async function createMedicine(data: MedicineCreateData): Promise<Medicine> {
   await delay(800);
   
   // 验证必需字段
-  if (!data.name || !data.sku || !data.pinyin) {
-    throw new Error('缺少必需字段: name, sku, pinyin');
+  if (!data.name || !data.sku || !data.pinyinName) {
+    throw new Error('缺少必需字段: name, sku, pinyinName');
   }
   
-  if (data.pricePerGram <= 0) {
+  if (!data.chineseName || !data.englishName) {
+    throw new Error('缺少必需字段: chineseName, englishName');
+  }
+  
+  if (data.basePrice <= 0) {
     throw new Error('价格必须大于0');
   }
   
@@ -124,30 +144,46 @@ export async function createMedicine(data: MedicineCreateData): Promise<Medicine
   // 检查名称是否已存在
   const existingName = allMedicines.find(med => med.name === data.name);
   if (existingName) {
-    throw new Error(`中药名称 "${data.name}" 已存在`);
+    throw new Error(`药品名称 "${data.name}" 已存在`);
   }
   
-  const now = new Date().toISOString();
+  const now = new Date();
   const newMedicine: Medicine = {
     id: generateId('med'),
-    ...data,
+    name: data.name,
+    chineseName: data.chineseName,
+    englishName: data.englishName,
+    pinyinName: data.pinyinName,
+    sku: data.sku,
+    description: data.description,
+    category: data.category,
+    unit: data.unit || 'g',
+    requiresPrescription: data.requiresPrescription || false,
+    basePrice: data.basePrice,
+    metadata: data.metadata || null,
+    status: data.status || 'active',
     createdAt: now,
     updatedAt: now
   };
+  
+  // 验证创建的数据
+  if (!validateMedicineData(newMedicine)) {
+    throw new Error('创建的药品数据不符合规范');
+  }
   
   allMedicines.push(newMedicine);
   return newMedicine;
 }
 
 /**
- * 更新中药信息
+ * 更新药品信息
  */
 export async function updateMedicine(id: string, data: MedicineUpdateData): Promise<Medicine> {
   await delay(600);
   
   const index = allMedicines.findIndex(med => med.id === id);
   if (index === -1) {
-    throw new Error(`中药ID "${id}" 不存在`);
+    throw new Error(`药品ID "${id}" 不存在`);
   }
   
   // 检查SKU唯一性
@@ -162,29 +198,34 @@ export async function updateMedicine(id: string, data: MedicineUpdateData): Prom
   if (data.name) {
     const existingName = allMedicines.find(med => med.id !== id && med.name === data.name);
     if (existingName) {
-      throw new Error(`中药名称 "${data.name}" 已存在`);
+      throw new Error(`药品名称 "${data.name}" 已存在`);
     }
   }
   
-  const updatedMedicine = {
+  const updatedMedicine: Medicine = {
     ...allMedicines[index],
     ...data,
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date()
   };
+  
+  // 验证更新后的数据
+  if (!validateMedicineData(updatedMedicine)) {
+    throw new Error('更新后的药品数据不符合规范');
+  }
   
   allMedicines[index] = updatedMedicine;
   return updatedMedicine;
 }
 
 /**
- * 删除中药
+ * 删除药品
  */
 export async function deleteMedicine(id: string): Promise<boolean> {
   await delay(500);
   
   const index = allMedicines.findIndex(med => med.id === id);
   if (index === -1) {
-    throw new Error(`中药ID "${id}" 不存在`);
+    throw new Error(`药品ID "${id}" 不存在`);
   }
   
   allMedicines.splice(index, 1);
@@ -209,7 +250,7 @@ export async function importMedicines(
     errors: [] as { index: number; message: string }[]
   };
   
-  const now = new Date().toISOString();
+  const now = new Date();
   
   for (let i = 0; i < medicines.length; i++) {
     const medicine = medicines[i];
@@ -237,10 +278,21 @@ export async function importMedicines(
         throw new Error(`拼音名称 "${medicine.pinyinName}" 已存在`);
       }
       
-      // 创建新中药
+      // 创建新药品
       const newMedicine: Medicine = {
         id: generateId('med'),
-        ...medicine,
+        name: medicine.name,
+        chineseName: medicine.chineseName,
+        englishName: medicine.englishName,
+        pinyinName: medicine.pinyinName,
+        sku: medicine.sku,
+        description: medicine.description,
+        category: medicine.category,
+        unit: medicine.unit,
+        requiresPrescription: medicine.requiresPrescription ?? false,
+        basePrice: medicine.basePrice,
+        metadata: medicine.metadata,
+        status: medicine.status ?? 'active',
         createdAt: now,
         updatedAt: now
       };
@@ -260,7 +312,7 @@ export async function importMedicines(
 }
 
 /**
- * 批量更新中药价格 (按百分比)
+ * 批量更新药品价格 (按百分比)
  */
 export async function bulkUpdatePrices(
   ids: string[],
@@ -278,7 +330,7 @@ export async function bulkUpdatePrices(
     errors: [] as { id: string; message: string }[]
   };
   
-  const now = new Date().toISOString();
+  const now = new Date();
   
   for (const id of ids) {
     try {
@@ -288,7 +340,7 @@ export async function bulkUpdatePrices(
         throw new Error(`中药ID "${id}" 不存在`);
       }
       
-      const currentPrice = allMedicines[index].pricePerGram;
+      const currentPrice = allMedicines[index].basePrice;
       const newPrice = currentPrice * (1 + percentageChange / 100);
       
       // 确保价格不为负
@@ -298,7 +350,7 @@ export async function bulkUpdatePrices(
       
       allMedicines[index] = {
         ...allMedicines[index],
-        pricePerGram: parseFloat(newPrice.toFixed(2)),
+        basePrice: parseFloat(newPrice.toFixed(2)),
         updatedAt: now
       };
       
@@ -333,7 +385,7 @@ export async function bulkUpdateStock(
     errors: [] as { id: string; message: string }[]
   };
   
-  const now = new Date().toISOString();
+  const now = new Date();
   
   for (const update of updates) {
     try {
@@ -343,8 +395,8 @@ export async function bulkUpdateStock(
         throw new Error(`中药ID "${update.id}" 不存在`);
       }
       
-      // 检查药品是否有库存字段，并且是否为数字，否则默认为0
-      const currentStock = typeof allMedicines[index].stock === 'number' ? allMedicines[index].stock : 0;
+      // 检查药品是否有库存字段（在 metadata 中），并且是否为数字，否则默认为0
+      const currentStock = (allMedicines[index].metadata && typeof allMedicines[index].metadata === 'object' && (allMedicines[index].metadata as any).stock) || 0;
       const newStock = currentStock + update.stockChange;
       
       // 确保库存不为负
@@ -354,7 +406,10 @@ export async function bulkUpdateStock(
       
       allMedicines[index] = {
         ...allMedicines[index],
-        stock: newStock,
+        metadata: {
+          ...((allMedicines[index].metadata as any) || {}),
+          stock: newStock
+        },
         updatedAt: now
       };
       
@@ -372,7 +427,7 @@ export async function bulkUpdateStock(
 }
 
 /**
- * 搜索中药（快速搜索，无分页）
+ * 搜索药品（快速搜索，无分页）
  */
 export async function searchMedicines(query: string): Promise<Medicine[]> {
   await delay(300);
@@ -383,10 +438,12 @@ export async function searchMedicines(query: string): Promise<Medicine[]> {
   
   const lowercaseQuery = query.toLowerCase();
   return allMedicines.filter(med => 
-    med.isActive && (
-      (med.name || med.chineseName || '').toLowerCase().includes(lowercaseQuery) ||
-      (med.englishName || '').toLowerCase().includes(lowercaseQuery) ||
-      (med.pinyin || med.pinyinName || '').toLowerCase().includes(lowercaseQuery)
+    med.status === 'active' && (
+      med.name.toLowerCase().includes(lowercaseQuery) ||
+      med.chineseName.toLowerCase().includes(lowercaseQuery) ||
+      med.englishName.toLowerCase().includes(lowercaseQuery) ||
+      med.pinyinName.toLowerCase().includes(lowercaseQuery) ||
+      med.sku.toLowerCase().includes(lowercaseQuery)
     )
   ).slice(0, 20); // 限制返回20条记录
 } 
