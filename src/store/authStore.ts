@@ -58,6 +58,7 @@ export const useAuthStore = create<AuthState & { checkAuth: () => Promise<void> 
     }),
     {
       name: 'tcm-auth-storage',
+      skipHydration: typeof window === 'undefined',
     }
   )
 ); 
