@@ -46,13 +46,16 @@ export default function MedicinesPage() {
     setLoading(true);
     try {
       const result = await getAllMedicines({
-        ...filters,
+        search: filters.query,
+        category: filters.category,
+        property: filters.property,
         page: currentPage,
-        limit: itemsPerPage
+        limit: itemsPerPage,
+        sort: `${filters.sortBy}:${filters.order}`
       });
       
-      setMedicines(result.data);
-      setTotalItems(result.total);
+      setMedicines(result);
+      setTotalItems(result.length);
     } catch (error) {
       console.error('Failed to load medicines:', error);
     } finally {

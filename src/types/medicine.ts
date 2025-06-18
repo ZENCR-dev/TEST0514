@@ -1,6 +1,9 @@
 /**
  * 中药管理系统数据模型
+ * 更新版本：支持后端确认的API格式
  */
+
+import { StandardApiResponse, PaginatedApiResponse, PaginationParams } from './api';
 
 /**
  * 中药分类枚举
@@ -40,9 +43,56 @@ export enum MedicineProperty {
 }
 
 /**
- * 药品类型定义
+ * 药品类型定义（新版本）
+ * 匹配后端确认的药品对象结构：{id, sku, name, pinyin, category, pricePerGram}
+ * 同时保持向后兼容性
  */
 export interface Medicine {
+  /** 药品唯一标识符 */
+  id: string;
+  /** 药品SKU编码 */
+  sku: string;
+  /** 中文名称（主要显示名称） */
+  name: string;
+  /** 拼音名称，用于搜索 */
+  pinyin: string;
+  /** 药品分类 */
+  category: string;
+  /** 每克价格（必须为数字类型） */
+  pricePerGram: number;
+  
+  // 向后兼容字段
+  /** @deprecated 使用 name 字段 */
+  chineseName?: string;
+  /** @deprecated 使用 pinyin 字段 */
+  pinyinName?: string;
+  /** @deprecated 使用 property 字段 */
+  properties?: string;
+  
+  // 可选的扩展字段
+  /** 英文名称（可选） */
+  englishName?: string;
+  /** 药性（可选） */
+  property?: string;
+  /** 库存量（克）（可选） */
+  stock?: number;
+  /** 药品描述（可选） */
+  description?: string;
+  /** 药品图片URL（可选） */
+  imageUrl?: string;
+  /** 是否启用（可选） */
+  isActive?: boolean;
+  /** 创建时间（可选） */
+  createdAt?: string;
+  /** 更新时间（可选） */
+  updatedAt?: string;
+}
+
+/**
+ * 药品类型定义（向后兼容）
+ * @deprecated 请使用新的 Medicine 接口
+ */
+export interface LegacyMedicine {
   id: string;
   chineseName: string;  // 中文名
   englishName: string;  // 英文名
@@ -72,9 +122,57 @@ export type MedicineCreateData = Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'
 export type MedicineUpdateData = Partial<Omit<Medicine, 'id' | 'createdAt' | 'updatedAt'>>;
 
 /**
- * 中药搜索参数
+ * 中药搜索参数（新版本）
+ * 匹配后端API参数格式
  */
-export interface MedicineSearchParams {
+export interface MedicineSearchParams extends PaginationParams {
+  /** 搜索关键词(中文名、拼音、英文) */
+  search?: string;
+  /** 按分类筛选 */
+  category?: string;
+  /** 按药性筛选 */
+  property?: string;
+  /** 最低价格 */
+  minPrice?: number;
+  /** 最高价格 */
+  maxPrice?: number;
+}
+
+/**
+ * 药品搜索响应数据类型
+ * 匹配后端确认的嵌套数据结构
+ */
+export interface MedicineSearchResponseData {
+  /** 药品列表 */
+  data: Medicine[];
+  /** 分页元数据 */
+  meta: {
+    pagination: {
+      page: number;
+      limit: number;
+      totalItems: number;
+      totalPages: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  };
+}
+
+/**
+ * 药品搜索API响应类型
+ */
+export type MedicineSearchApiResponse = StandardApiResponse<MedicineSearchResponseData>;
+
+/**
+ * 药品详情API响应类型
+ */
+export type MedicineDetailApiResponse = StandardApiResponse<Medicine>;
+
+/**
+ * 中药搜索参数（向后兼容）
+ * @deprecated 请使用 MedicineSearchParams
+ */
+export interface LegacyMedicineSearchParams {
   query?: string;       // 搜索关键词(中文名、拼音、英文)
   category?: string;    // 按分类筛选
   property?: string;    // 按药性筛选
@@ -87,7 +185,8 @@ export interface MedicineSearchParams {
 }
 
 /**
- * 中药分页结果
+ * 中药分页结果（向后兼容）
+ * @deprecated 请使用 MedicineSearchResponseData
  */
 export interface PaginatedMedicines {
   data: Medicine[];     // 数据

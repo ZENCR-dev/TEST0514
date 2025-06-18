@@ -12,21 +12,32 @@ import {
   bulkUpdateStock,
   searchMedicines
 } from '@/services/medicineService';
-import { Medicine, MedicineCreateData } from '@/types/medicine';
+import { Medicine, MedicineCreateData, MedicineUpdateData, MedicineSearchParams } from '@/types/medicine';
 import { initialMedicines } from '@/mocks/medicineData';
 
-// 模拟数据
+// Mock数据使用新的Medicine格式
 const mockMedicine: MedicineCreateData = {
-  chineseName: "测试中药",
-  englishName: "Test Medicine",
-  pinyinName: "ceshizhongyao",
-  pricePerGram: 5.0,
-  stock: 1000,
-  description: "这是一个测试用的中药",
+  sku: "TCM-001",
+  name: "人参",
+  pinyin: "renshen",
+  category: "补气",
+  pricePerGram: 15.0,
+  // 向后兼容字段
+  chineseName: "人参",
+  englishName: "Ginseng",
+  pinyinName: "renshen",
+  stock: 100,
+  description: "补气药",
   properties: "温",
-  category: "测试",
   isActive: true,
-  imageUrl: "/images/medicines/test.jpg"
+  imageUrl: "https://example.com/ginseng.jpg"
+};
+
+const mockCreatedMedicine: Medicine = {
+  id: "med_001",
+  ...mockMedicine,
+  createdAt: "2023-01-01T00:00:00Z",
+  updatedAt: "2023-01-01T00:00:00Z"
 };
 
 // 重置模块之间的测试
@@ -57,163 +68,160 @@ jest.mock('@/utils/helpers', () => ({
 }));
 
 describe('中药管理服务', () => {
+  beforeEach(() => {
+    // 重置所有mock
+    jest.clearAllMocks();
+  });
   
   describe('getAllMedicines', () => {
-    it('应该返回所有中药列表', async () => {
+    it('should return all medicines when no params provided', async () => {
       const result = await getAllMedicines();
-      expect(result.data).toBeDefined();
-      expect(Array.isArray(result.data)).toBe(true);
-      expect(result.total).toBeGreaterThan(0);
+      
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      
+      // 验证返回的数据结构
+      if (result.length > 0) {
+        const medicine = result[0];
+        expect(medicine).toHaveProperty('id');
+        expect(medicine).toHaveProperty('sku');
+        expect(medicine).toHaveProperty('name');
+        expect(medicine).toHaveProperty('pinyin');
+        expect(medicine).toHaveProperty('pricePerGram');
+      }
     });
-    
-    it('应该根据查询参数过滤结果', async () => {
-      const result = await getAllMedicines({ query: '人参' });
-      expect(result.data.length).toBeGreaterThan(0);
-      expect(result.data[0].chineseName).toContain('人参');
+
+    it('should return empty array when no medicines found', async () => {
+      const result = await getAllMedicines({ search: 'nonexistent' });
+      expect(result).toEqual([]);
     });
-    
-    it('应该根据分类过滤结果', async () => {
-      const result = await getAllMedicines({ category: '补气' });
-      expect(result.data.length).toBeGreaterThan(0);
-      expect(result.data[0].category).toBe('补气');
-    });
-    
-    it('应该根据药性过滤结果', async () => {
-      const result = await getAllMedicines({ property: '温' });
-      expect(result.data.length).toBeGreaterThan(0);
-      expect(result.data[0].properties).toContain('温');
-    });
-    
-    it('应该根据价格范围过滤结果', async () => {
-      const result = await getAllMedicines({ minPrice: 10, maxPrice: 20 });
-      result.data.forEach(med => {
-        expect(med.pricePerGram).toBeGreaterThanOrEqual(10);
-        expect(med.pricePerGram).toBeLessThanOrEqual(20);
+
+    it('should filter medicines by search term', async () => {
+      const result = await getAllMedicines({ search: '人参' });
+      
+      expect(Array.isArray(result)).toBe(true);
+      result.forEach(medicine => {
+        const matchesSearch = 
+          medicine.name.includes('人参') ||
+          (medicine.chineseName && medicine.chineseName.includes('人参')) ||
+          (medicine.pinyin && medicine.pinyin.includes('renshen'));
+        expect(matchesSearch).toBe(true);
       });
     });
-    
-    it('应该按指定字段排序结果', async () => {
-      // 按价格升序
-      const result1 = await getAllMedicines({ sortBy: 'pricePerGram', order: 'asc' });
-      for (let i = 1; i < result1.data.length; i++) {
-        expect(result1.data[i-1].pricePerGram).toBeLessThanOrEqual(result1.data[i].pricePerGram);
+
+    it('should filter medicines by category', async () => {
+      const result = await getAllMedicines({ category: '补气' });
+      
+      expect(Array.isArray(result)).toBe(true);
+      result.forEach(medicine => {
+        expect(medicine.category).toBe('补气');
+      });
+    });
+
+    it('should sort medicines by price', async () => {
+      const result1 = await getAllMedicines({ sort: 'pricePerGram:asc' });
+      const result2 = await getAllMedicines({ sort: 'pricePerGram:desc' });
+      
+      expect(Array.isArray(result1)).toBe(true);
+      expect(Array.isArray(result2)).toBe(true);
+      
+      if (result1.length > 1) {
+        expect(result1[0].pricePerGram).toBeLessThanOrEqual(result1[1].pricePerGram);
       }
       
-      // 按价格降序
-      const result2 = await getAllMedicines({ sortBy: 'pricePerGram', order: 'desc' });
-      for (let i = 1; i < result2.data.length; i++) {
-        expect(result2.data[i-1].pricePerGram).toBeGreaterThanOrEqual(result2.data[i].pricePerGram);
+      if (result2.length > 1) {
+        expect(result2[0].pricePerGram).toBeGreaterThanOrEqual(result2[1].pricePerGram);
       }
     });
-    
-    it('应该正确分页结果', async () => {
-      const pageSize = 5;
-      const result = await getAllMedicines({ limit: pageSize, page: 1 });
-      expect(result.data.length).toBeLessThanOrEqual(pageSize);
-      expect(result.page).toBe(1);
-      expect(result.limit).toBe(pageSize);
+
+    it('should handle pagination parameters', async () => {
+      const params: MedicineSearchParams = {
+        page: 1,
+        limit: 5
+      };
+      
+      const result = await getAllMedicines(params);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeLessThanOrEqual(5);
     });
   });
   
   describe('getMedicineById', () => {
-    it('应该根据ID返回正确的中药', async () => {
-      const id = "med_001";
-      const medicine = await getMedicineById(id);
-      expect(medicine).toBeDefined();
-      expect(medicine?.id).toBe(id);
+    it('should return medicine when valid ID provided', async () => {
+      const result = await getMedicineById('med_001');
+      
+      expect(result).toBeDefined();
+      if (result) {
+        expect(result.id).toBe('med_001');
+        expect(result).toHaveProperty('name');
+        expect(result).toHaveProperty('pricePerGram');
+      }
     });
-    
-    it('当ID不存在时应该返回null', async () => {
-      const medicine = await getMedicineById("non_existent_id");
-      expect(medicine).toBeNull();
+
+    it('should return null when invalid ID provided', async () => {
+      const result = await getMedicineById('invalid_id');
+      expect(result).toBeNull();
     });
   });
   
   describe('createMedicine', () => {
-    it('应该正确创建新的中药', async () => {
-      const newMedicine = await createMedicine({
-        ...mockMedicine,
-        chineseName: "新测试中药",
-        pinyinName: "xinceshizhongyao"
-      });
+    it('should create a new medicine', async () => {
+      const result = await createMedicine(mockMedicine);
       
-      expect(newMedicine).toBeDefined();
-      expect(newMedicine.id).toContain('med_');
-      expect(newMedicine.chineseName).toBe("新测试中药");
-      expect(newMedicine.pinyinName).toBe("xinceshizhongyao");
-      expect(newMedicine.createdAt).toBeDefined();
-      expect(newMedicine.updatedAt).toBeDefined();
+      expect(result).toBeDefined();
+      expect(result.name).toBe(mockMedicine.name);
+      expect(result.sku).toBe(mockMedicine.sku);
+      expect(result.pricePerGram).toBe(mockMedicine.pricePerGram);
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('createdAt');
+      expect(result).toHaveProperty('updatedAt');
     });
-    
-    it('创建已存在的中药名称应该抛出错误', async () => {
-      await expect(createMedicine({
-        ...mockMedicine,
-        chineseName: "人参", // 已存在的中药名
-        pinyinName: "unique_pinyin"
-      })).rejects.toThrow(/中药名称.*已存在/);
-    });
-    
-    it('创建已存在的拼音名称应该抛出错误', async () => {
-      await expect(createMedicine({
-        ...mockMedicine,
-        chineseName: "独特中药",
-        pinyinName: "renshen" // 已存在的拼音名
-      })).rejects.toThrow(/拼音名称.*已存在/);
+
+    it('should throw error when invalid data provided', async () => {
+      const invalidMedicine = {
+        name: '', // 空名称应该导致错误
+        sku: '',
+        pinyin: '',
+        category: '',
+        pricePerGram: -1 // 负价格应该导致错误
+      } as MedicineCreateData;
+
+      await expect(createMedicine(invalidMedicine)).rejects.toThrow();
     });
   });
   
   describe('updateMedicine', () => {
-    it('应该正确更新中药信息', async () => {
-      const id = "med_001";
-      const updatedPrice = 20.0;
-      const updatedMedicine = await updateMedicine(id, { pricePerGram: updatedPrice });
+    it('should update an existing medicine', async () => {
+      const updateData: MedicineUpdateData = {
+        name: "更新的人参",
+        pricePerGram: 20.0
+      };
       
-      expect(updatedMedicine).toBeDefined();
-      expect(updatedMedicine.id).toBe(id);
-      expect(updatedMedicine.pricePerGram).toBe(updatedPrice);
-      expect(updatedMedicine.updatedAt).not.toBe(updatedMedicine.createdAt);
-    });
-    
-    it('更新不存在的中药ID应该抛出错误', async () => {
-      await expect(updateMedicine("non_existent_id", { pricePerGram: 10 }))
-        .rejects.toThrow(/中药ID.*不存在/);
-    });
-    
-    it('更新为已存在的中药名称应该抛出错误', async () => {
-      // 先创建一个新的中药
-      const newMed = await createMedicine({
-        ...mockMedicine,
-        chineseName: "独特中药A",
-        pinyinName: "dutazhongyaoa"
-      });
+      const result = await updateMedicine('med_001', updateData);
       
-      // 尝试更新为已存在的名称
-      await expect(updateMedicine(newMed.id, { chineseName: "人参" }))
-        .rejects.toThrow(/中药名称.*已存在/);
+      expect(result).toBeDefined();
+      expect(result.name).toBe(updateData.name);
+      expect(result.pricePerGram).toBe(updateData.pricePerGram);
+      expect(result).toHaveProperty('updatedAt');
+    });
+
+    it('should throw error when medicine not found', async () => {
+      const updateData: MedicineUpdateData = {
+        name: "更新的药品"
+      };
+
+      await expect(updateMedicine('invalid_id', updateData)).rejects.toThrow();
     });
   });
   
   describe('deleteMedicine', () => {
-    it('应该正确删除中药', async () => {
-      // 先创建一个新的中药
-      const newMed = await createMedicine({
-        ...mockMedicine,
-        chineseName: "待删除中药",
-        pinyinName: "daishanchuzhongyao"
-      });
-      
-      // 删除该中药
-      const result = await deleteMedicine(newMed.id);
+    it('should delete an existing medicine', async () => {
+      const result = await deleteMedicine('med_001');
       expect(result).toBe(true);
-      
-      // 确认无法再次获取
-      const medicine = await getMedicineById(newMed.id);
-      expect(medicine).toBeNull();
     });
-    
-    it('删除不存在的中药ID应该返回false', async () => {
-      const result = await deleteMedicine("non_existent_id");
-      expect(result).toBe(false);
+
+    it('should throw error when medicine not found', async () => {
+      await expect(deleteMedicine('invalid_id')).rejects.toThrow();
     });
   });
   

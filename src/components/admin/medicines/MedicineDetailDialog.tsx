@@ -105,7 +105,7 @@ export function MedicineDetailDialog({
                 <div className="relative h-48 w-full bg-gray-100 rounded-md overflow-hidden">
                   <Image 
                     src={medicine.imageUrl} 
-                    alt={medicine.chineseName}
+                    alt={medicine.name || medicine.chineseName || '药品图片'}
                     layout="fill"
                     objectFit="cover"
                     onError={(e) => {

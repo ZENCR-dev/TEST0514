@@ -15,4 +15,10 @@ export * from './medicine';
 export * from './admin';
 
 // 处方相关类型
-export * from './prescription'; 
+export * from './prescription';
+
+// 重新导出所有类型
+export * from './api';
+export * from './pharmacy';
+export * from './invoice';
+export * from './adapters'; 

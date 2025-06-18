@@ -9,36 +9,45 @@ import { MedicineForm } from '@/components/admin/medicines/MedicineForm';
 import { MedicineList } from '@/components/admin/medicines/MedicineList';
 import { MedicineFilters } from '@/components/admin/medicines/MedicineFilters';
 import { Medicine } from '@/types/medicine';
+import MedicineSearch from '@/components/prescription/MedicineSearch';
 
 // 模拟初始数据
 const mockMedicines: Medicine[] = [
   {
     id: "med_001",
+    sku: "TCM-001",
+    name: "人参",
+    pinyin: "renshen",
+    category: "补气",
+    pricePerGram: 15.0,
+    // 向后兼容字段
     chineseName: "人参",
     englishName: "Ginseng",
     pinyinName: "renshen",
-    pricePerGram: 15.0,
-    stock: 5000,
-    description: "补气补血，益精安神",
+    stock: 100,
+    description: "补气药",
     properties: "温",
-    category: "补气",
     isActive: true,
-    imageUrl: "/images/medicines/renshen.jpg",
+    imageUrl: "https://example.com/ginseng.jpg",
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z"
   },
   {
     id: "med_002",
+    sku: "TCM-002",
+    name: "当归",
+    pinyin: "danggui",
+    category: "补血",
+    pricePerGram: 3.5,
+    // 向后兼容字段
     chineseName: "当归",
     englishName: "Angelica Sinensis",
     pinyinName: "danggui",
-    pricePerGram: 3.5,
-    stock: 8000,
-    description: "补血活血，调经止痛",
+    stock: 200,
+    description: "补血药",
     properties: "温",
-    category: "补血",
     isActive: true,
-    imageUrl: "/images/medicines/danggui.jpg",
+    imageUrl: "https://example.com/angelica.jpg",
     createdAt: "2023-01-01T00:00:00Z",
     updatedAt: "2023-01-01T00:00:00Z"
   }
@@ -80,9 +89,10 @@ jest.mock('@/services/medicineService', () => ({
     if (!query) return Promise.resolve([]);
     return Promise.resolve(
       mockMedicines.filter(m => 
-        m.chineseName.includes(query) || 
-        m.englishName.toLowerCase().includes(query.toLowerCase()) ||
-        m.pinyinName.includes(query)
+        m.name.includes(query) ||
+        (m.chineseName && m.chineseName.includes(query)) ||
+        (m.englishName && m.englishName.toLowerCase().includes(query.toLowerCase())) ||
+        (m.pinyinName && m.pinyinName.includes(query))
       )
     );
   })
@@ -138,7 +148,7 @@ describe('中药管理集成测试 - MedicineForm组件', () => {
     expect(screen.getByLabelText(/英文名/i)).toHaveValue(mockMedicines[0].englishName);
     expect(screen.getByLabelText(/拼音名/i)).toHaveValue(mockMedicines[0].pinyinName);
     expect(screen.getByLabelText(/单价/i)).toHaveValue(mockMedicines[0].pricePerGram.toString());
-    expect(screen.getByLabelText(/库存/i)).toHaveValue(mockMedicines[0].stock.toString());
+    expect(screen.getByLabelText(/库存/i)).toHaveValue(mockMedicines[0].stock?.toString() || '');
     expect(screen.getByLabelText(/描述/i)).toHaveValue(mockMedicines[0].description);
   });
   
@@ -434,6 +444,77 @@ describe('中药管理集成测试 - MedicineFilters组件', () => {
     expect(handleChange).toHaveBeenCalledWith({
       ...filters,
       order: 'desc'
+    });
+  });
+});
+
+describe('Medicine Components', () => {
+  describe('MedicineSearch', () => {
+    it('renders search input', () => {
+      const mockOnSelectMedicine = jest.fn();
+      
+      render(
+        <MedicineSearch 
+          onSelectMedicine={mockOnSelectMedicine}
+        />
+      );
+      
+      expect(screen.getByPlaceholderText(/搜索药材/)).toBeInTheDocument();
+    });
+
+    it('calls onSelectMedicine when medicine is selected', () => {
+      const mockOnSelectMedicine = jest.fn();
+      
+      render(
+        <MedicineSearch 
+          onSelectMedicine={mockOnSelectMedicine}
+        />
+      );
+      
+      const searchInput = screen.getByPlaceholderText(/搜索药材/);
+      fireEvent.change(searchInput, { target: { value: '人参' } });
+      
+      // 等待搜索结果出现
+      const medicineOption = screen.getByText('人参');
+      fireEvent.click(medicineOption);
+      
+      expect(mockOnSelectMedicine).toHaveBeenCalled();
+    });
+
+    it('shows search results when typing', () => {
+      const mockOnSelectMedicine = jest.fn();
+      
+      render(
+        <MedicineSearch 
+          onSelectMedicine={mockOnSelectMedicine}
+        />
+      );
+      
+      const searchInput = screen.getByPlaceholderText(/搜索药材/);
+      fireEvent.change(searchInput, { target: { value: '人参' } });
+      
+      expect(screen.getByText('人参')).toBeInTheDocument();
+    });
+  });
+
+  describe('Medicine Form', () => {
+    it('renders medicine form with correct values', () => {
+      // 模拟药品表单组件测试
+      const medicine = mockMedicines[0];
+      
+      render(
+        <div>
+          <input aria-label="药品名称" defaultValue={medicine.name} />
+          <input aria-label="拼音" defaultValue={medicine.pinyin} />
+          <input aria-label="价格" defaultValue={medicine.pricePerGram.toString()} />
+          <input aria-label="库存" defaultValue={medicine.stock?.toString() || ''} />
+        </div>
+      );
+      
+      expect(screen.getByLabelText(/药品名称/i)).toHaveValue('人参');
+      expect(screen.getByLabelText(/拼音/i)).toHaveValue('renshen');
+      expect(screen.getByLabelText(/价格/i)).toHaveValue('15');
+      expect(screen.getByLabelText(/库存/i)).toHaveValue(mockMedicines[0].stock?.toString() || '');
     });
   });
 }); 

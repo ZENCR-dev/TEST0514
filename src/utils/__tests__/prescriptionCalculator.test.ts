@@ -111,6 +111,7 @@ describe('prescriptionCalculator', () => {
 
   describe('calculatePrescription', () => {
     const validPrescriptionData: PrescriptionQRData = {
+      prescriptionId: 'test_prescription_001',
       items: [
         { id: 'med_001', name: '人参', quantity: 15 },
         { id: 'med_002', name: '当归', quantity: 12 }
@@ -145,6 +146,7 @@ describe('prescriptionCalculator', () => {
 
     it('应该处理包含未找到药品的处方', () => {
       const prescriptionWithMissingMedicine: PrescriptionQRData = {
+        prescriptionId: 'test_prescription_002',
         items: [
           { id: 'med_001', name: '人参', quantity: 15 },
           { id: 'med_999', name: '不存在的药品', quantity: 10 }
@@ -169,6 +171,7 @@ describe('prescriptionCalculator', () => {
 
     it('应该通过名称查找药品（当ID不匹配时）', () => {
       const prescriptionWithNameMatch: PrescriptionQRData = {
+        prescriptionId: 'test_prescription_003',
         items: [
           { id: 'wrong_id', name: '人参', quantity: 10 }
         ],
@@ -185,6 +188,7 @@ describe('prescriptionCalculator', () => {
 
     it('应该正确处理单个药品处方', () => {
       const singleMedicinePrescription: PrescriptionQRData = {
+        prescriptionId: 'test_prescription_004',
         items: [
           { id: 'med_001', name: '人参', quantity: 20 }
         ],
@@ -210,6 +214,7 @@ describe('prescriptionCalculator', () => {
     it('应该正确四舍五入价格', () => {
       // 使用会产生小数的药品和用量
       const prescriptionWithDecimals: PrescriptionQRData = {
+        prescriptionId: 'test_prescription_005',
         items: [
           { id: 'med_001', name: '人参', quantity: 1.33 } // 可能产生小数价格
         ],
@@ -265,6 +270,7 @@ describe('prescriptionCalculator', () => {
     it('应该完整处理真实的处方计算流程', () => {
       // 使用真实的药品数据创建处方
       const realPrescription: PrescriptionQRData = {
+        prescriptionId: 'test_prescription_006',
         items: [
           { id: 'med_001', name: '人参', quantity: 15 },
           { id: 'med_002', name: '当归', quantity: 12 },

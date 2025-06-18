@@ -71,9 +71,9 @@ export function findMedicineByName(medicineName: string): Medicine | null {
   const searchName = medicineName.toLowerCase().trim();
   
   return initialMedicines.find(medicine => 
-    medicine.chineseName.toLowerCase() === searchName ||
-    medicine.englishName.toLowerCase() === searchName ||
-    medicine.pinyinName.toLowerCase() === searchName
+    (medicine.name || medicine.chineseName || '').toLowerCase() === searchName ||
+    (medicine.englishName || '').toLowerCase() === searchName ||
+    (medicine.pinyin || medicine.pinyinName || '').toLowerCase() === searchName
   ) || null;
 }
 
@@ -102,10 +102,14 @@ export function toPharmacyMedicineInfo(medicine: Medicine | null, found: boolean
   if (!medicine || !found) {
     return {
       id: '',
+      sku: '',
+      name: '',
+      pinyin: '',
+      category: '',
+      pricePerGram: 0,
       chineseName: '',
       englishName: '',
       pinyinName: '',
-      pricePerGram: 0,
       wholesalePrice: 0,
       costPrice: 0,
       found: false
@@ -161,6 +165,7 @@ export function calculatePrescription(prescriptionData: PrescriptionQRData): Pre
       // 药品未找到
       const notFoundInfo = toPharmacyMedicineInfo(null, false);
       notFoundInfo.id = item.id;
+      notFoundInfo.name = item.name || `药品-${item.id}`;
       notFoundInfo.chineseName = item.name || `药品-${item.id}`;
       medicineDetails.push(notFoundInfo);
       notFoundMedicines.push(`${item.name || `药品-${item.id}`} (ID: ${item.id})`);

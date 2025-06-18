@@ -11,489 +11,652 @@ import { Medicine } from '@/types/medicine';
 export const initialMedicines: Medicine[] = [
   {
     id: "med_001",
+    sku: "TCM-001",
+    name: "人参",
+    pinyin: "renshen",
+    category: "补气",
+    pricePerGram: 15.0,
+    // 向后兼容字段
     chineseName: "人参",
     englishName: "Ginseng",
     pinyinName: "renshen",
-    pricePerGram: 15.0,
-    property: "温",
-    category: "补气"
+    property: "温"
   },
   {
     id: "med_002",
+    sku: "TCM-002",
+    name: "当归",
+    pinyin: "danggui",
+    category: "补血",
+    pricePerGram: 3.5,
     chineseName: "当归",
     englishName: "Angelica Sinensis",
     pinyinName: "danggui",
-    pricePerGram: 3.5,
-    property: "温",
-    category: "补血"
+    property: "温"
   },
   {
     id: "med_003",
+    sku: "TCM-003",
+    name: "黄芪",
+    pinyin: "huangqi",
+    category: "补气",
+    pricePerGram: 2.8,
     chineseName: "黄芪",
     englishName: "Astragalus",
     pinyinName: "huangqi",
-    pricePerGram: 2.8,
-    property: "温",
-    category: "补气"
+    property: "温"
   },
   {
     id: "med_004",
+    sku: "TCM-004",
+    name: "白术",
+    pinyin: "baizhu",
+    category: "补气",
+    pricePerGram: 2.5,
     chineseName: "白术",
     englishName: "Atractylodes",
     pinyinName: "baizhu",
-    pricePerGram: 2.5,
-    property: "温",
-    category: "补气"
+    property: "温"
   },
   {
     id: "med_005",
+    sku: "TCM-005",
+    name: "甘草",
+    pinyin: "gancao",
+    category: "补气",
+    pricePerGram: 1.2,
     chineseName: "甘草",
     englishName: "Licorice",
     pinyinName: "gancao",
-    pricePerGram: 1.2,
-    property: "平",
-    category: "补气"
+    property: "平"
   },
   {
     id: "med_006",
+    sku: "TCM-006",
+    name: "川芎",
+    pinyin: "chuanxiong",
+    category: "活血",
+    pricePerGram: 2.2,
     chineseName: "川芎",
     englishName: "Szechuan Lovage",
     pinyinName: "chuanxiong",
-    pricePerGram: 2.2,
-    property: "温",
-    category: "活血"
+    property: "温"
   },
   {
     id: "med_007",
+    sku: "TCM-007",
+    name: "黄连",
+    pinyin: "huanglian",
+    category: "清热",
+    pricePerGram: 8.0,
     chineseName: "黄连",
     englishName: "Coptis Chinensis",
     pinyinName: "huanglian",
-    pricePerGram: 8.0,
-    property: "寒",
-    category: "清热"
+    property: "寒"
   },
   {
     id: "med_008",
+    sku: "TCM-008",
+    name: "陈皮",
+    pinyin: "chenpi",
+    category: "理气",
+    pricePerGram: 1.5,
     chineseName: "陈皮",
     englishName: "Dried Tangerine Peel",
     pinyinName: "chenpi",
-    pricePerGram: 1.5,
-    property: "温",
-    category: "理气"
+    property: "温"
   },
   {
     id: "med_009",
+    sku: "TCM-009",
+    name: "生地黄",
+    pinyin: "shengdihuang",
+    category: "补血",
+    pricePerGram: 2.0,
     chineseName: "生地黄",
     englishName: "Rehmannia",
     pinyinName: "shengdihuang",
-    pricePerGram: 2.0,
-    property: "寒",
-    category: "补血"
+    property: "寒"
   },
   {
     id: "med_010",
+    sku: "TCM-010",
+    name: "茯苓",
+    pinyin: "fuling",
+    category: "利水渗湿",
+    pricePerGram: 1.8,
     chineseName: "茯苓",
     englishName: "Poria",
     pinyinName: "fuling",
-    pricePerGram: 1.8,
-    property: "平",
-    category: "利水渗湿"
+    property: "平"
   },
   {
     id: "med_011",
+    sku: "TCM-011",
+    name: "红参",
+    pinyin: "hongshen",
+    category: "补气",
+    pricePerGram: 18.0,
     chineseName: "红参",
     englishName: "Red Ginseng",
     pinyinName: "hongshen",
-    pricePerGram: 18.0,
-    property: "温",
-    category: "补气"
+    property: "温"
   },
   {
     id: "med_012",
+    sku: "TCM-012",
+    name: "西洋参",
+    pinyin: "xiyangshen",
+    category: "补气",
+    pricePerGram: 12.0,
     chineseName: "西洋参",
     englishName: "American Ginseng",
     pinyinName: "xiyangshen",
-    pricePerGram: 12.0,
-    property: "凉",
-    category: "补气"
+    property: "凉"
   },
   {
     id: "med_013",
+    sku: "TCM-013",
+    name: "山药",
+    pinyin: "shanyao",
+    category: "补气",
+    pricePerGram: 1.5,
     chineseName: "山药",
     englishName: "Chinese Yam",
     pinyinName: "shanyao",
-    pricePerGram: 1.5,
-    property: "平",
-    category: "补气"
+    property: "平"
   },
   {
     id: "med_014",
+    sku: "TCM-014",
+    name: "党参",
+    pinyin: "dangshen",
+    category: "补气",
+    pricePerGram: 3.2,
     chineseName: "党参",
     englishName: "Codonopsis",
     pinyinName: "dangshen",
-    pricePerGram: 3.2,
-    property: "平",
-    category: "补气"
+    property: "平"
   },
   {
     id: "med_015",
+    sku: "TCM-015",
+    name: "白芍",
+    pinyin: "baishao",
+    category: "补血",
+    pricePerGram: 2.0,
     chineseName: "白芍",
     englishName: "White Peony Root",
     pinyinName: "baishao",
-    pricePerGram: 2.0,
-    property: "微寒",
-    category: "补血"
+    property: "微寒"
   },
   {
     id: "med_016",
+    sku: "TCM-016",
+    name: "熟地黄",
+    pinyin: "shudihuang",
+    category: "补血",
+    pricePerGram: 2.5,
     chineseName: "熟地黄",
     englishName: "Prepared Rehmannia",
     pinyinName: "shudihuang",
-    pricePerGram: 2.5,
-    property: "温",
-    category: "补血"
+    property: "温"
   },
   {
     id: "med_017",
+    sku: "TCM-017",
+    name: "何首乌",
+    pinyin: "heshouwu",
+    category: "补血",
+    pricePerGram: 3.0,
     chineseName: "何首乌",
     englishName: "Fo-Ti Root",
     pinyinName: "heshouwu",
-    pricePerGram: 3.0,
-    property: "微温",
-    category: "补血"
+    property: "微温"
   },
   {
     id: "med_018",
+    sku: "TCM-018",
+    name: "阿胶",
+    pinyin: "ejiao",
+    category: "补血",
+    pricePerGram: 10.0,
     chineseName: "阿胶",
     englishName: "Donkey-Hide Gelatin",
     pinyinName: "ejiao",
-    pricePerGram: 10.0,
-    property: "平",
-    category: "补血"
+    property: "平"
   },
   {
     id: "med_019",
+    sku: "TCM-019",
+    name: "北沙参",
+    pinyin: "beishashen",
+    category: "补阴",
+    pricePerGram: 4.5,
     chineseName: "北沙参",
     englishName: "Glehnia Root",
     pinyinName: "beishashen",
-    pricePerGram: 4.5,
-    property: "微寒",
-    category: "补阴"
+    property: "微寒"
   },
   {
     id: "med_020",
+    sku: "TCM-020",
+    name: "麦冬",
+    pinyin: "maidong",
+    category: "补阴",
+    pricePerGram: 3.8,
     chineseName: "麦冬",
     englishName: "Ophiopogon",
     pinyinName: "maidong",
-    pricePerGram: 3.8,
-    property: "微寒",
-    category: "补阴"
+    property: "微寒"
   },
   {
     id: "med_021",
+    sku: "TCM-021",
+    name: "天门冬",
+    pinyin: "tiandong",
+    category: "补阴",
+    pricePerGram: 4.2,
     chineseName: "天门冬",
     englishName: "Asparagus Root",
     pinyinName: "tiandong",
-    pricePerGram: 4.2,
-    property: "寒",
-    category: "补阴"
+    property: "寒"
   },
   {
     id: "med_022",
+    sku: "TCM-022",
+    name: "石斛",
+    pinyin: "shihu",
+    category: "补阴",
+    pricePerGram: 12.5,
     chineseName: "石斛",
     englishName: "Dendrobium",
     pinyinName: "shihu",
-    pricePerGram: 12.5,
-    property: "微寒",
-    category: "补阴"
+    property: "微寒"
   },
   {
     id: "med_023",
+    sku: "TCM-023",
+    name: "玉竹",
+    pinyin: "yuzhu",
+    category: "补阴",
+    pricePerGram: 3.5,
     chineseName: "玉竹",
     englishName: "Polygonatum Odoratum",
     pinyinName: "yuzhu",
-    pricePerGram: 3.5,
-    property: "微寒",
-    category: "补阴"
+    property: "微寒"
   },
   {
     id: "med_024",
+    sku: "TCM-024",
+    name: "枸杞子",
+    pinyin: "gouqizi",
+    category: "补阴",
+    pricePerGram: 2.8,
     chineseName: "枸杞子",
     englishName: "Goji Berry",
     pinyinName: "gouqizi",
-    pricePerGram: 2.8,
-    property: "平",
-    category: "补阴"
+    property: "平"
   },
   {
     id: "med_025",
+    sku: "TCM-025",
+    name: "鹿茸",
+    pinyin: "lurong",
+    category: "补阳",
+    pricePerGram: 85.0,
     chineseName: "鹿茸",
     englishName: "Deer Antler",
     pinyinName: "lurong",
-    pricePerGram: 85.0,
-    property: "温",
-    category: "补阳"
+    property: "温"
   },
   {
     id: "med_026",
+    sku: "TCM-026",
+    name: "淫羊藿",
+    pinyin: "yinyanghuo",
+    category: "补阳",
+    pricePerGram: 3.5,
     chineseName: "淫羊藿",
     englishName: "Epimedium",
     pinyinName: "yinyanghuo",
-    pricePerGram: 3.5,
-    property: "温",
-    category: "补阳"
+    property: "温"
   },
   {
     id: "med_027",
+    sku: "TCM-027",
+    name: "巴戟天",
+    pinyin: "bajitian",
+    category: "补阳",
+    pricePerGram: 4.0,
     chineseName: "巴戟天",
     englishName: "Morinda Root",
     pinyinName: "bajitian",
-    pricePerGram: 4.0,
-    property: "温",
-    category: "补阳"
+    property: "温"
   },
   {
     id: "med_028",
+    sku: "TCM-028",
+    name: "杜仲",
+    pinyin: "duzhong",
+    category: "补阳",
+    pricePerGram: 2.5,
     chineseName: "杜仲",
     englishName: "Eucommia Bark",
     pinyinName: "duzhong",
-    pricePerGram: 2.5,
-    property: "温",
-    category: "补阳"
+    property: "温"
   },
   {
     id: "med_029",
+    sku: "TCM-029",
+    name: "补骨脂",
+    pinyin: "buguzhi",
+    category: "补阳",
+    pricePerGram: 1.8,
     chineseName: "补骨脂",
     englishName: "Psoralea Fruit",
     pinyinName: "buguzhi",
-    pricePerGram: 1.8,
-    property: "温",
-    category: "补阳"
+    property: "温"
   },
   {
     id: "med_030",
+    sku: "TCM-030",
+    name: "肉苁蓉",
+    pinyin: "roucongrong",
+    category: "补阳",
+    pricePerGram: 12.0,
     chineseName: "肉苁蓉",
     englishName: "Cistanche",
     pinyinName: "roucongrong",
-    pricePerGram: 12.0,
-    property: "温",
-    category: "补阳"
+    property: "温"
   },
   {
     id: "med_031",
+    sku: "TCM-031",
+    name: "防风",
+    pinyin: "fangfeng",
+    category: "祛风",
+    pricePerGram: 2.2,
     chineseName: "防风",
     englishName: "Siler Root",
     pinyinName: "fangfeng",
-    pricePerGram: 2.2,
-    property: "温",
-    category: "祛风"
+    property: "温"
   },
   {
     id: "med_032",
+    sku: "TCM-032",
+    name: "羌活",
+    pinyin: "qianghuo",
+    category: "祛风",
+    pricePerGram: 3.5,
     chineseName: "羌活",
     englishName: "Notopterygium Root",
     pinyinName: "qianghuo",
-    pricePerGram: 3.5,
-    property: "温",
-    category: "祛风"
+    property: "温"
   },
   {
     id: "med_033",
+    sku: "TCM-033",
+    name: "独活",
+    pinyin: "duhuo",
+    category: "祛风",
+    pricePerGram: 3.0,
     chineseName: "独活",
     englishName: "Pubescent Angelica Root",
     pinyinName: "duhuo",
-    pricePerGram: 3.0,
-    property: "温",
-    category: "祛风"
+    property: "温"
   },
   {
     id: "med_034",
+    sku: "TCM-034",
+    name: "蔓荆子",
+    pinyin: "manjingzi",
+    category: "祛风",
+    pricePerGram: 2.0,
     chineseName: "蔓荆子",
     englishName: "Vitex Fruit",
     pinyinName: "manjingzi",
-    pricePerGram: 2.0,
-    property: "微寒",
-    category: "祛风"
+    property: "微寒"
   },
   {
     id: "med_035",
+    sku: "TCM-035",
+    name: "藁本",
+    pinyin: "gaoben",
+    category: "祛风",
+    pricePerGram: 3.8,
     chineseName: "藁本",
     englishName: "Ligusticum Root",
     pinyinName: "gaoben",
-    pricePerGram: 3.8,
-    property: "温",
-    category: "祛风"
+    property: "温"
   },
   {
     id: "med_036",
+    sku: "TCM-036",
+    name: "金银花",
+    pinyin: "jinyinhua",
+    category: "清热",
+    pricePerGram: 3.5,
     chineseName: "金银花",
     englishName: "Honeysuckle Flower",
     pinyinName: "jinyinhua",
-    pricePerGram: 3.5,
-    property: "寒",
-    category: "清热"
+    property: "寒"
   },
   {
     id: "med_037",
+    sku: "TCM-037",
+    name: "连翘",
+    pinyin: "lianqiao",
+    category: "清热",
+    pricePerGram: 3.0,
     chineseName: "连翘",
     englishName: "Forsythia Fruit",
     pinyinName: "lianqiao",
-    pricePerGram: 3.0,
-    property: "微寒",
-    category: "清热"
+    property: "微寒"
   },
   {
     id: "med_038",
+    sku: "TCM-038",
+    name: "板蓝根",
+    pinyin: "banlanken",
+    category: "清热",
+    pricePerGram: 2.5,
     chineseName: "板蓝根",
     englishName: "Isatis Root",
     pinyinName: "banlanken",
-    pricePerGram: 2.5,
-    property: "寒",
-    category: "清热"
+    property: "寒"
   },
   {
     id: "med_039",
+    sku: "TCM-039",
+    name: "栀子",
+    pinyin: "zhizi",
+    category: "清热",
+    pricePerGram: 2.0,
     chineseName: "栀子",
     englishName: "Gardenia Fruit",
     pinyinName: "zhizi",
-    pricePerGram: 2.0,
-    property: "寒",
-    category: "清热"
+    property: "寒"
   },
   {
     id: "med_040",
+    sku: "TCM-040",
+    name: "龙胆草",
+    pinyin: "longdancao",
+    category: "清热",
+    pricePerGram: 4.0,
     chineseName: "龙胆草",
     englishName: "Gentian Root",
     pinyinName: "longdancao",
-    pricePerGram: 4.0,
-    property: "寒",
-    category: "清热"
+    property: "寒"
   },
   {
     id: "med_041",
+    sku: "TCM-041",
+    name: "薄荷",
+    pinyin: "bohe",
+    category: "清热",
+    pricePerGram: 2.0,
     chineseName: "薄荷",
     englishName: "Mint",
     pinyinName: "bohe",
-    pricePerGram: 2.0,
-    property: "凉",
-    category: "清热"
+    property: "凉"
   },
   {
     id: "med_042",
+    sku: "TCM-042",
+    name: "苍术",
+    pinyin: "cangzhu",
+    category: "祛湿",
+    pricePerGram: 2.2,
     chineseName: "苍术",
     englishName: "Atractylodes Rhizome",
     pinyinName: "cangzhu",
-    pricePerGram: 2.2,
-    property: "温",
-    category: "祛湿"
+    property: "温"
   },
   {
     id: "med_043",
+    sku: "TCM-043",
+    name: "厚朴",
+    pinyin: "houpo",
+    category: "祛湿",
+    pricePerGram: 1.8,
     chineseName: "厚朴",
     englishName: "Magnolia Bark",
     pinyinName: "houpo",
-    pricePerGram: 1.8,
-    property: "温",
-    category: "祛湿"
+    property: "温"
   },
   {
     id: "med_044",
+    sku: "TCM-044",
+    name: "草豆蔻",
+    pinyin: "caodoukou",
+    category: "祛湿",
+    pricePerGram: 3.5,
     chineseName: "草豆蔻",
     englishName: "Alpinia Seed",
     pinyinName: "caodoukou",
-    pricePerGram: 3.5,
-    property: "温",
-    category: "祛湿"
+    property: "温"
   },
   {
     id: "med_045",
+    sku: "TCM-045",
+    name: "藿香",
+    pinyin: "huoxiang",
+    category: "祛湿",
+    pricePerGram: 2.5,
     chineseName: "藿香",
     englishName: "Agastache",
     pinyinName: "huoxiang",
-    pricePerGram: 2.5,
-    property: "微温",
-    category: "祛湿"
+    property: "微温"
   },
   {
     id: "med_046",
+    sku: "TCM-046",
+    name: "佩兰",
+    pinyin: "peilan",
+    category: "祛湿",
+    pricePerGram: 1.8,
     chineseName: "佩兰",
     englishName: "Eupatorium",
     pinyinName: "peilan",
-    pricePerGram: 1.8,
-    property: "凉",
-    category: "祛湿"
+    property: "凉"
   },
   {
     id: "med_047",
+    sku: "TCM-047",
+    name: "半夏",
+    pinyin: "banxia",
+    category: "化痰",
+    pricePerGram: 3.8,
     chineseName: "半夏",
     englishName: "Pinellia Rhizome",
     pinyinName: "banxia",
-    pricePerGram: 3.8,
-    property: "温",
-    category: "化痰"
+    property: "温"
   },
   {
     id: "med_048",
+    sku: "TCM-048",
+    name: "天南星",
+    pinyin: "tiannanxing",
+    category: "化痰",
+    pricePerGram: 2.5,
     chineseName: "天南星",
     englishName: "Jack-in-the-pulpit",
     pinyinName: "tiannanxing",
-    pricePerGram: 2.5,
-    property: "温",
-    category: "化痰"
+    property: "温"
   },
   {
     id: "med_049",
+    sku: "TCM-049",
+    name: "瓜蒌",
+    pinyin: "gualou",
+    category: "化痰",
+    pricePerGram: 1.6,
     chineseName: "瓜蒌",
     englishName: "Trichosanthes Fruit",
     pinyinName: "gualou",
-    pricePerGram: 1.6,
-    property: "寒",
-    category: "化痰"
+    property: "寒"
   },
   {
     id: "med_050",
+    sku: "TCM-050",
+    name: "桔梗",
+    pinyin: "jiegeng",
+    category: "化痰",
+    pricePerGram: 2.8,
     chineseName: "桔梗",
     englishName: "Platycodon Root",
     pinyinName: "jiegeng",
-    pricePerGram: 2.8,
-    property: "平",
-    category: "化痰"
+    property: "平"
   },
   {
     id: "med_051",
+    sku: "TCM-051",
+    name: "枳实",
+    pinyin: "zhishi",
+    category: "理气",
+    pricePerGram: 1.8,
     chineseName: "枳实",
     englishName: "Immature Bitter Orange",
     pinyinName: "zhishi",
-    pricePerGram: 1.8,
-    property: "微寒",
-    category: "理气"
+    property: "微寒"
   },
   {
     id: "med_052",
+    sku: "TCM-052",
+    name: "青皮",
+    pinyin: "qingpi",
+    category: "理气",
+    pricePerGram: 1.5,
     chineseName: "青皮",
     englishName: "Immature Tangerine Peel",
     pinyinName: "qingpi",
-    pricePerGram: 1.5,
-    property: "温",
-    category: "理气"
+    property: "温"
   },
   {
     id: "med_053",
+    sku: "TCM-053",
+    name: "木香",
+    pinyin: "muxiang",
+    category: "理气",
+    pricePerGram: 4.5,
     chineseName: "木香",
     englishName: "Costus Root",
     pinyinName: "muxiang",
-    pricePerGram: 4.5,
-    property: "温",
-    category: "理气"
+    property: "温"
   },
   {
     id: "med_054",
+    sku: "TCM-054",
+    name: "香附",
+    pinyin: "xiangfu",
+    category: "理气",
+    pricePerGram: 1.2,
     chineseName: "香附",
     englishName: "Cyperus Rhizome",
     pinyinName: "xiangfu",
-    pricePerGram: 1.2,
-    property: "平",
-    category: "理气"
+    property: "平"
   },
 ];
 

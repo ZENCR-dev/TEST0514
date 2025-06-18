@@ -14,6 +14,7 @@ describe('qrParser', () => {
   
   // 测试用的有效处方数据
   const validPrescriptionData: PrescriptionQRData = {
+    prescriptionId: 'test_prescription_qr_001',
     items: [
       { id: 'med_001', name: '人参', quantity: 15 },
       { id: 'med_002', name: '当归', quantity: 12 }

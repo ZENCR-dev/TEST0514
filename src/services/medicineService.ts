@@ -1,7 +1,14 @@
 /**
  * 中药管理服务
  */
-import { Medicine, MedicineCreateData, MedicineSearchParams, MedicineUpdateData, PaginatedMedicines } from '@/types/medicine';
+import { 
+  Medicine, 
+  MedicineCreateData, 
+  MedicineSearchParams, 
+  MedicineUpdateData,
+  MedicineSearchApiResponse,
+  MedicineDetailApiResponse 
+} from '@/types/medicine';
 import { delay, generateId } from '@/utils/helpers';
 import { initialMedicines } from '@/mocks/medicineData';
 
@@ -11,20 +18,25 @@ let allMedicines: Medicine[] = [...initialMedicines];
 /**
  * 获取所有中药列表(带分页和筛选)
  */
-export async function getAllMedicines(params: MedicineSearchParams = {}): Promise<PaginatedMedicines> {
+export async function getAllMedicines(params: MedicineSearchParams = {}): Promise<Medicine[]> {
   await delay(600);
   
   const {
-    query = '',
+    search = '',
     category,
     property,
     minPrice,
     maxPrice,
     page = 1,
     limit = 10,
-    sortBy = 'chineseName',
-    order = 'asc'
+    sort = 'name:asc'
   } = params;
+  
+  // 解析排序参数
+  const [sortBy = 'name', order = 'asc'] = sort.split(':') as ['name' | 'pricePerGram' | 'createdAt', 'asc' | 'desc'];
+  
+  // 为了向后兼容，将query映射到search
+  const query = search;
   
   // 过滤
   let filtered = [...allMedicines];
@@ -32,9 +44,9 @@ export async function getAllMedicines(params: MedicineSearchParams = {}): Promis
   if (query) {
     const lowercaseQuery = query.toLowerCase();
     filtered = filtered.filter(med => 
-      med.chineseName.toLowerCase().includes(lowercaseQuery) ||
-      med.englishName.toLowerCase().includes(lowercaseQuery) ||
-      med.pinyinName.toLowerCase().includes(lowercaseQuery)
+      (med.name || med.chineseName || '').toLowerCase().includes(lowercaseQuery) ||
+      (med.englishName || '').toLowerCase().includes(lowercaseQuery) ||
+      (med.pinyin || med.pinyinName || '').toLowerCase().includes(lowercaseQuery)
     );
   }
   
@@ -77,13 +89,7 @@ export async function getAllMedicines(params: MedicineSearchParams = {}): Promis
   const end = start + limit;
   const paged = filtered.slice(start, end);
   
-  return {
-    data: paged,
-    total: totalItems,
-    page,
-    limit,
-    totalPages
-  };
+  return paged;
 }
 
 /**
@@ -100,21 +106,25 @@ export async function getMedicineById(id: string): Promise<Medicine | null> {
 export async function createMedicine(data: MedicineCreateData): Promise<Medicine> {
   await delay(800);
   
-  // 检查名称是否已存在
-  const existingChinese = allMedicines.find(
-    med => med.chineseName === data.chineseName
-  );
-  
-  if (existingChinese) {
-    throw new Error(`中药名称 "${data.chineseName}" 已存在`);
+  // 验证必需字段
+  if (!data.name || !data.sku || !data.pinyin) {
+    throw new Error('缺少必需字段: name, sku, pinyin');
   }
   
-  const existingPinyin = allMedicines.find(
-    med => med.pinyinName === data.pinyinName
-  );
+  if (data.pricePerGram <= 0) {
+    throw new Error('价格必须大于0');
+  }
   
-  if (existingPinyin) {
-    throw new Error(`拼音名称 "${data.pinyinName}" 已存在`);
+  // 检查SKU是否已存在
+  const existingSku = allMedicines.find(med => med.sku === data.sku);
+  if (existingSku) {
+    throw new Error(`SKU "${data.sku}" 已存在`);
+  }
+  
+  // 检查名称是否已存在
+  const existingName = allMedicines.find(med => med.name === data.name);
+  if (existingName) {
+    throw new Error(`中药名称 "${data.name}" 已存在`);
   }
   
   const now = new Date().toISOString();
@@ -140,24 +150,19 @@ export async function updateMedicine(id: string, data: MedicineUpdateData): Prom
     throw new Error(`中药ID "${id}" 不存在`);
   }
   
-  // 检查名称唯一性
-  if (data.chineseName) {
-    const existingChinese = allMedicines.find(
-      med => med.id !== id && med.chineseName === data.chineseName
-    );
-    
-    if (existingChinese) {
-      throw new Error(`中药名称 "${data.chineseName}" 已存在`);
+  // 检查SKU唯一性
+  if (data.sku) {
+    const existingSku = allMedicines.find(med => med.id !== id && med.sku === data.sku);
+    if (existingSku) {
+      throw new Error(`SKU "${data.sku}" 已存在`);
     }
   }
   
-  if (data.pinyinName) {
-    const existingPinyin = allMedicines.find(
-      med => med.id !== id && med.pinyinName === data.pinyinName
-    );
-    
-    if (existingPinyin) {
-      throw new Error(`拼音名称 "${data.pinyinName}" 已存在`);
+  // 检查名称唯一性
+  if (data.name) {
+    const existingName = allMedicines.find(med => med.id !== id && med.name === data.name);
+    if (existingName) {
+      throw new Error(`中药名称 "${data.name}" 已存在`);
     }
   }
   
@@ -179,7 +184,7 @@ export async function deleteMedicine(id: string): Promise<boolean> {
   
   const index = allMedicines.findIndex(med => med.id === id);
   if (index === -1) {
-    return false;
+    throw new Error(`中药ID "${id}" 不存在`);
   }
   
   allMedicines.splice(index, 1);
@@ -379,9 +384,9 @@ export async function searchMedicines(query: string): Promise<Medicine[]> {
   const lowercaseQuery = query.toLowerCase();
   return allMedicines.filter(med => 
     med.isActive && (
-      med.chineseName.toLowerCase().includes(lowercaseQuery) ||
-      med.englishName.toLowerCase().includes(lowercaseQuery) ||
-      med.pinyinName.toLowerCase().includes(lowercaseQuery)
+      (med.name || med.chineseName || '').toLowerCase().includes(lowercaseQuery) ||
+      (med.englishName || '').toLowerCase().includes(lowercaseQuery) ||
+      (med.pinyin || med.pinyinName || '').toLowerCase().includes(lowercaseQuery)
     )
   ).slice(0, 20); // 限制返回20条记录
 } 
