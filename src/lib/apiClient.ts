@@ -243,15 +243,15 @@ class TokenManager {
 
   constructor() {
     // 从localStorage恢复refreshToken
-    this.refreshToken = localStorage.getItem('tcm_refresh_token');
+    this.refreshToken = typeof window !== 'undefined' ? localStorage.getItem('tcm_refresh_token') : null;
   }
 
   setTokens(accessToken: string, refreshToken: string): void {
     this.accessToken = accessToken;
     this.refreshToken = refreshToken;
-    localStorage.setItem('tcm_refresh_token', refreshToken);
-    
-    // 设置自动刷新定时器
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tcm_refresh_token', refreshToken);
+    }
     this.scheduleTokenRefresh(accessToken);
   }
 
@@ -266,7 +266,9 @@ class TokenManager {
   clearTokens(): void {
     this.accessToken = null;
     this.refreshToken = null;
-    localStorage.removeItem('tcm_refresh_token');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tcm_refresh_token');
+    }
     this.isRefreshing = false;
     
     // 清除自动刷新定时器

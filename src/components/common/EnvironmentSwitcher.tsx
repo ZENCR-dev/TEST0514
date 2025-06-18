@@ -26,9 +26,11 @@ export function EnvironmentSwitcher({ className = '' }: EnvironmentSwitcherProps
     // 检查当前环境
     setCurrentEnv(apiClient.getCurrentEnvironment());
     
+    // 检查是否在联调期间（开发时使用）
+    const isIntegrationPeriod = typeof window !== 'undefined' ? localStorage.getItem('tcm_show_env_switcher') === 'true' : false;
+
     // 在开发环境或联调模式下显示
     const isDev = process.env.NODE_ENV === 'development';
-    const isIntegrationPeriod = localStorage.getItem('tcm_show_env_switcher') === 'true';
     setIsVisible(isDev || isIntegrationPeriod);
   }, []);
 
@@ -70,6 +72,20 @@ export function EnvironmentSwitcher({ className = '' }: EnvironmentSwitcherProps
           description: '使用自定义API端点'
         };
     }
+  };
+
+  const showSwitcher = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tcm_show_env_switcher', 'true');
+    }
+    setIsVisible(true);
+  };
+
+  const hideSwitcher = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tcm_show_env_switcher', 'false');
+    }
+    setIsVisible(false);
   };
 
   if (!isVisible) {

@@ -30,7 +30,10 @@ export function useErrorHandler(options: UseErrorHandlerOptions = {}) {
   
   // 临时的logout函数，实际项目中应该使用useAuth
   const logout = () => {
-    localStorage.removeItem('tcm_refresh_token');
+    // 清除本地存储的token
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tcm_refresh_token');
+    }
     // 可以在这里添加其他清理逻辑
   };
 

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { AuthState, LoginCredentials, User } from '@/types/auth';
 import { loginUser, logoutUser } from '@/services/authService';
 
@@ -58,7 +58,18 @@ export const useAuthStore = create<AuthState & { checkAuth: () => Promise<void> 
     }),
     {
       name: 'tcm-auth-storage',
-      skipHydration: typeof window === 'undefined',
+      storage: createJSONStorage(() => {
+        // 在服务端返回一个空的存储实现
+        if (typeof window === 'undefined') {
+          return {
+            getItem: () => null,
+            setItem: () => {},
+            removeItem: () => {},
+          };
+        }
+        return localStorage;
+      }),
+      skipHydration: true,
     }
   )
 ); 
