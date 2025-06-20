@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useHotkeys } from 'react-hotkeys-hook';
-import { mockMedicines } from '@/mocks/medicineData';
+import { ApiClient } from '@/lib/apiClient';
 import { Medicine } from '@/types/medicine';
 
 interface MedicineSearchProps {
@@ -21,6 +21,8 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
   const [results, setResults] = useState<Medicine[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -41,26 +43,63 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
     }
   }, []);
 
+  // 创建异步搜索函数
+  const searchMedicines = async (term: string): Promise<Medicine[]> => {
+    const apiClient = new ApiClient();
+    try {
+      const response = await apiClient.get('/api/v1/medicines', { 
+        search: term, 
+        limit: 15 
+      });
+      // ApiClient已经处理了 {success: true, data: [...]} 格式，直接返回的就是数据数组
+      return Array.isArray(response) ? response : [];
+    } catch (err) {
+      console.error('搜索药品失败:', err);
+      throw new Error('搜索服务暂时不可用，请稍后重试');
+    }
+  };
+
   // 搜索药品
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setResults([]);
       setIsDropdownVisible(false);
+      setError(null);
       return;
     }
 
-    const lowercaseTerm = searchTerm.toLowerCase();
+    let cancelled = false;
     
-    // 搜索中文名、拼音名和英文名
-    const filteredResults = mockMedicines.filter(medicine => 
-            (medicine.name || medicine.chineseName || '').includes(searchTerm) ||
-      (medicine.pinyinName || '').includes(lowercaseTerm) ||
-      (medicine.englishName || '').toLowerCase().includes(lowercaseTerm)
-    ).slice(0, 15); // 增加显示结果数量至15个
-    
-    setResults(filteredResults);
-    setIsDropdownVisible(filteredResults.length > 0);
-    setSelectedIndex(0); // 重置选中项索引
+    const performSearch = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const searchResults = await searchMedicines(searchTerm);
+        if (!cancelled) {
+          setResults(searchResults);
+          setIsDropdownVisible(searchResults.length > 0);
+          setSelectedIndex(0);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const errorMsg = err instanceof Error ? err.message : '搜索失败，请重试';
+          setError(errorMsg);
+          setResults([]);
+          setIsDropdownVisible(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    performSearch();
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchTerm]);
 
   // 键盘导航
@@ -157,13 +196,22 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
             }
           }}
         />
-        {searchTerm && (
+        {/* 加载状态或清除按钮 */}
+        {isLoading ? (
+          <div className="p-2 text-gray-500">
+            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </div>
+        ) : searchTerm && (
           <button
             className="p-2 text-gray-500 hover:text-gray-700"
             onClick={() => {
               setSearchTerm('');
               setResults([]);
               setIsDropdownVisible(false);
+              setError(null);
               inputRef.current?.focus();
             }}
           >
@@ -174,7 +222,17 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
         )}
       </div>
 
-      {isDropdownVisible && (
+      {/* 错误显示 */}
+      {error && (
+        <div className="absolute z-50 w-full mt-1 bg-red-50 border border-red-200 rounded-md shadow-lg">
+          <div className="px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        </div>
+      )}
+
+      {/* 搜索结果下拉菜单 */}
+      {isDropdownVisible && !error && (
         <div 
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-y-auto" 

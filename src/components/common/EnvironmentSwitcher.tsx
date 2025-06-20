@@ -35,14 +35,14 @@ export function EnvironmentSwitcher({ className = '' }: EnvironmentSwitcherProps
   }, []);
 
   const handleSwitchToIntegration = () => {
-    apiClient.switchToIntegrationMode();
+    apiClient.switchToNestJSBackend();
     setCurrentEnv('integration');
     // 刷新页面以应用新的API环境
     window.location.reload();
   };
 
   const handleSwitchToMock = () => {
-    apiClient.switchToMockMode();
+    apiClient.switchToNextJSAPI();
     setCurrentEnv('mock');
     // 刷新页面以应用新的API环境
     window.location.reload();
