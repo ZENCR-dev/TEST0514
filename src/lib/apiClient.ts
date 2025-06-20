@@ -462,48 +462,71 @@ export class ApiClient {
       return process.env.NEXT_PUBLIC_API_URL;
     }
 
-    // 联调环境配置
+    // 后端服务选择
     if (typeof window !== 'undefined') {
-      const isIntegrationMode = localStorage.getItem('tcm_integration_mode') === 'true';
-      if (isIntegrationMode) {
-        return 'https://staging-api.tcm.onrender.com/api/v1';
+      const backendMode = localStorage.getItem('tcm_backend_mode');
+      
+      // NestJS独立后端服务（端口3001）
+      if (backendMode === 'nestjs' || !backendMode) {
+        return 'http://localhost:3001/api/v1';  // 默认使用NestJS后端
+      }
+      
+      // Next.js集成API Routes（端口3000）
+      if (backendMode === 'nextjs') {
+        return 'http://localhost:3000/api/v1';
       }
     }
 
-    // 默认Mock/本地环境
-    return 'http://localhost:3001';
+    // 默认使用NestJS后端服务（已确认可用）
+    return 'http://localhost:3001/api/v1';
   }
 
   /**
-   * 切换到联调环境
+   * 切换到NestJS后端服务
+   */
+  switchToNestJSBackend(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tcm_backend_mode', 'nestjs');
+      this.baseURL = 'http://localhost:3001/api/v1';
+      console.log('🚀 已切换到NestJS后端:', this.baseURL);
+    }
+  }
+
+  /**
+   * 切换到Next.js API Routes
+   */
+  switchToNextJSAPI(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tcm_backend_mode', 'nextjs');
+      this.baseURL = 'http://localhost:3000/api/v1';
+      console.log('🔧 已切换到Next.js API:', this.baseURL);
+    }
+  }
+
+  /**
+   * 切换到联调模式（Integration Mode）
+   * 使用NestJS独立后端服务进行真实联调（3001端口）
    */
   switchToIntegrationMode(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('tcm_integration_mode', 'true');
-      this.baseURL = 'https://staging-api.tcm.onrender.com/api/v1';
-      console.log('🚀 已切换到联调环境:', this.baseURL);
-    }
+    this.switchToNestJSBackend();
   }
 
   /**
-   * 切换到Mock环境
+   * 切换到Mock模式
+   * 使用Next.js API Routes作为Mock环境（3000端口）
    */
   switchToMockMode(): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('tcm_integration_mode', 'false');
-      this.baseURL = 'http://localhost:3001';
-      console.log('🔧 已切换到Mock环境:', this.baseURL);
-    }
+    this.switchToNextJSAPI();
   }
 
   /**
    * 获取当前API环境
    */
   getCurrentEnvironment(): 'integration' | 'mock' | 'custom' {
-    if (this.baseURL.includes('staging-api.tcm.onrender.com')) {
-      return 'integration';
-    } else if (this.baseURL.includes('localhost:3001')) {
-      return 'mock';
+    if (this.baseURL.includes('localhost:3001')) {
+      return 'integration';  // NestJS后端为真实联调环境
+    } else if (this.baseURL.includes('localhost:3000')) {
+      return 'mock';  // Next.js API Routes为Mock环境
     } else {
       return 'custom';
     }

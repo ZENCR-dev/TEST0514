@@ -1,0 +1,40 @@
+{
+  "mcpServers": {
+    "interactive-feedback-mcp": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "D:\\develop\\test0514\\interactive-feedback-mcp",
+        "run",
+        "server.py"
+      ],
+      "timeout": 600,
+      "autoApprove": [
+        "interactive_feedback"
+      ]
+    },
+    "browser-tools-mcp": {
+      "command": "npx",
+      "args": [
+        "@agentdeskai/browser-tools-mcp@latest"
+      ],
+      "timeout": 600,
+      "autoApprove": [
+        "getConsoleLogs",
+        "getConsoleErrors",
+        "getNetworkErrors",
+        "getNetworkLogs",
+        "takeScreenshot",
+        "getSelectedElement",
+        "wipeLogs",
+        "runAccessibilityAudit",
+        "runPerformanceAudit",
+        "runSEOAudit",
+        "runNextJSAudit",
+        "runDebuggerMode",
+        "runAuditMode",
+        "runBestPracticesAudit"
+      ]
+    }
+  }
+} 

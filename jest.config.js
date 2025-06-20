@@ -27,4 +27,8 @@ module.exports = {
   },
   // Ignore Next.js build directory
   testPathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/node_modules/"],
+  // Transform ES modules in node_modules
+  transformIgnorePatterns: [
+    "node_modules/(?!(react-hotkeys-hook)/)"
+  ],
 }; 

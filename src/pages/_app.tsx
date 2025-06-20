@@ -5,22 +5,6 @@ import { useAuthStore } from '@/store/authStore';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 
-// 仅在开发模式下导入 stagewise
-let StagewiseToolbar: any = null;
-if (process.env.NODE_ENV === 'development') {
-  try {
-    const { StagewiseToolbar: Toolbar } = require('@stagewise/toolbar-next');
-    StagewiseToolbar = Toolbar;
-  } catch (error) {
-    console.warn('Stagewise toolbar not available:', error);
-  }
-}
-
-// Stagewise 配置
-const stagewiseConfig = {
-  plugins: []
-};
-
 export default function App({ Component, pageProps }: AppProps) {
   const { checkAuth } = useAuthStore();
   const [mounted, setMounted] = useState(false);
@@ -40,10 +24,6 @@ export default function App({ Component, pageProps }: AppProps) {
     <ErrorBoundary>
       <Component {...pageProps} />
       <Toaster />
-      {/* 仅在开发模式下渲染 stagewise 工具栏 */}
-      {process.env.NODE_ENV === 'development' && StagewiseToolbar && (
-        <StagewiseToolbar config={stagewiseConfig} />
-      )}
     </ErrorBoundary>
   );
 } 

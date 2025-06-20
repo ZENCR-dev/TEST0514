@@ -26,7 +26,7 @@ alwaysApply: true
 
 1.  **任务理解与分解**: 自动调用 **Sequential Thinking** (`mcp_sequential-thinking_sequentialthinking`) 工具，对用户提示词进行深入分析，分解任务，并确定完成任务所需的总体步骤数量。
 2.  **RIPER 模式序列规划**: 运用你的专业知识和 RIPER 框架，规划出 Research-Innovate-Plan-Execute-Review 这五个模式的**最佳排列组合和多重调用顺序**，以高效、有序地完成任务。如果用户在提示词中指定了模式，则此规划应**严格遵守用户指定的模式范围**。
-3.  **解决方案报告与批准**: 将上述任务分析结果（包括总步骤数、RIPER 模式序列以及任何初步的思考和考量）总结成一份详细的**解决方案提案**。随后，你必须调用 **mcp-feedback-enhanced** (`mcp_mcp-feedback-enhanced_interactive_feedback`) 工具，将这份提案报告给用户，并**请求用户的批准**。在获得用户明确批准之前，你不得进入任何 RIPER 模式并开始实际任务执行。
+3.  **解决方案报告与批准**: 将上述任务分析结果（包括总步骤数、RIPER 模式序列以及任何初步的思考和考量）总结成一份详细的**解决方案提案**。随后，你必须调用 **mcp-feedback-enhanced** (`mcp_mcp_interactive-feedback-mcp`) 工具，将这份提案报告给用户，并**请求用户的批准**。在获得用户明确批准之前，你不得进入任何 RIPER 模式并开始实际任务执行。
 
 ---
 
@@ -39,7 +39,7 @@ alwaysApply: true
 *   **禁止**: 任何建议、实现、规划或暗示行动。**严禁对代码库进行任何修改。**
 *   **如何利用 MCP**:\
     *   **Context7**: 当需要了解新库、框架或特定 API 的最新文档时，主动使用 `mcp_context7_resolve-library-id` 和 `mcp_context7_get-library-docs` 工具。例如，你可以说：“我将使用 Context7 搜索 React Hooks 的最新文档。”
-    *   **mcp-feedback-enhanced**: 在需要用户澄清或反馈时使用此工具。
+    *   **mcp_interactive-feedback-mcp**: 在需要用户澄清或反馈时使用此工具。
 
 ### 2. 创新模式 (INNOVATE)
 `[MODE: INNOVATE]`
@@ -110,7 +110,7 @@ alwaysApply: true
 
 *   **会话开始时**: 在每次会话或任务开始时，你必须读取所有内存库文件（如 `projectbrief.md`, `productContext.md` 等），以理解项目上下文和当前状态。
 *   **上下文更新**: 独立自主地从对话中提取新信息，并更新相关的内存文件（特别是 `activeContext.md` 和 `progress.md`），以保持上下文的最新性。
-*   **积极利用 MCP**: 持续利用 `mcp_feedback_enhanced_interactive_feedback` 工具在关键决策点、进度更新或需要用户反馈时进行交互。
+*   **积极利用 MCP**: 持续利用 `mcp_interactive-feedback-mcp` 工具在关键决策点、进度更新或需要用户反馈时进行交互。
 
 ---
 
@@ -120,7 +120,7 @@ alwaysApply: true
 
 *   **信息查询/文档检索**: 使用 Context7 (`mcp_context7_resolve-library-id`, `mcp_context7_get-library-docs`) 获取实时、精确的库或 API 文档。
 *   **复杂问题分解/思考规划**: 使用 Sequential Thinking (`mcp_sequential-thinking_sequentialthinking`) 进行多步逻辑推理、方案构思或任务规划。
-*   **用户交互/反馈**: 持续使用 `mcp_mcp-feedback-enhanced_interactive_feedback` 在关键点提供摘要、请求批准或收集用户输入。
+*   **用户交互/反馈**: 持续使用 `mcp_interactive-feedback-mcp` 在关键点提供摘要、请求批准或收集用户输入。
 *   **数据库/后端操作**: 根据具体需求，主动调用 Supabase 相关的工具 (`mcp_supabase_list_projects` 等)，如需执行 SQL 查询或迁移，使用 `mcp_supabase_execute_sql` 或 `mcp_supabase_apply_migration`。
 
 ---
