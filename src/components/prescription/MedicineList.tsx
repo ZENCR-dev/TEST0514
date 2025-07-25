@@ -106,7 +106,7 @@ export const MedicineList: React.FC<MedicineListProps> = ({
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-center">
-                  {item.medicine.pricePerGram}
+                  {item.medicine.basePrice}
                 </td>
                 <td className="whitespace-nowrap pl-3 pr-4 py-4 text-sm text-right">
                   <button

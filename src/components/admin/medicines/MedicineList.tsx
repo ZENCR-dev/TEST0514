@@ -25,6 +25,8 @@ interface MedicineListProps {
   onEdit?: (medicine: Medicine) => void;
   onDelete?: (medicine: Medicine) => void;
   onViewDetail?: (medicine: Medicine) => void;
+  onSort?: (field: string, direction: 'asc' | 'desc') => void;
+  onFilter?: (filters: any) => void;
   selectedMedicines?: Medicine[];
   onSelect?: (medicine: Medicine, selected: boolean) => void;
   onSelectAll?: (selected: boolean) => void;
@@ -160,7 +162,7 @@ export function MedicineList({
               <TableCell>{medicine.englishName}</TableCell>
               <TableCell>{medicine.category || '-'}</TableCell>
               <TableCell>{medicine.property || medicine.properties || '-'}</TableCell>
-              <TableCell className="text-right">{formatCurrency(medicine.pricePerGram)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(medicine.basePrice)}</TableCell>
               <TableCell className="text-right">{medicine.stock ?? '-'}</TableCell>
               <TableCell className="text-right">
                 <div className="flex justify-end space-x-2">

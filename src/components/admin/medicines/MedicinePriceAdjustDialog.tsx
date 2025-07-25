@@ -145,10 +145,10 @@ export function MedicinePriceAdjustDialog({
                             {medicine.chineseName}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-right">
-                            {formatCurrency(medicine.pricePerGram)}
+                            {formatCurrency(medicine.basePrice)}
                           </td>
                           <td className="px-3 py-2 whitespace-nowrap text-sm text-right">
-                            {formatCurrency(getAdjustedPrice(medicine.pricePerGram))}
+                            {formatCurrency(getAdjustedPrice(medicine.basePrice))}
                           </td>
                         </tr>
                       ))}

@@ -38,14 +38,3 @@ Thumbs.db
 /tcm-prescription-platform/
 /backup/
 # package-lock.json # 确保package-lock.json被提交以保证构建一致性
-
-# Google Drive 同步临时文件
-.tmp.driveupload/
-*.tmp.driveupload
-*/.tmp.driveupload/
-
-# 大文件和备份文件（Git LFS处理）
-*.pack
-*.backup
-coverage/
-*.log

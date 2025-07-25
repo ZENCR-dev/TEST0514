@@ -54,7 +54,7 @@ export function MedicineDetailDialog({
               <div className="text-sm">{medicine.pinyinName}</div>
               
               <div className="text-sm text-gray-500">单价：</div>
-              <div className="text-sm">{formatCurrency(medicine.pricePerGram)}/克</div>
+              <div className="text-sm">{formatCurrency(medicine.basePrice)}/克</div>
               
               <div className="text-sm text-gray-500">库存：</div>
               <div className="text-sm">{medicine.stock ?? '-'} {medicine.stock ? '克' : ''}</div>
@@ -90,10 +90,10 @@ export function MedicineDetailDialog({
             <h3 className="text-sm font-medium text-gray-500">其他信息</h3>
             <div className="grid grid-cols-2 gap-2">
               <div className="text-sm text-gray-500">创建时间：</div>
-              <div className="text-sm">{medicine.createdAt ? formatDate(medicine.createdAt) : '-'}</div>
+              <div className="text-sm">{medicine.createdAt ? formatDate(medicine.createdAt.toISOString()) : '-'}</div>
               
               <div className="text-sm text-gray-500">更新时间：</div>
-              <div className="text-sm">{medicine.updatedAt ? formatDate(medicine.updatedAt) : '-'}</div>
+              <div className="text-sm">{medicine.updatedAt ? formatDate(medicine.updatedAt.toISOString()) : '-'}</div>
               
               <div className="text-sm text-gray-500">ID：</div>
               <div className="text-sm text-gray-400">{medicine.id}</div>

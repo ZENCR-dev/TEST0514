@@ -49,6 +49,18 @@ export interface Medicine {
   /** 基础价格 (number类型，单位: 元/克) */
   basePrice: number;
   
+  /** 库存数量 (可选字段) */
+  stock?: number;
+  
+  /** 药品性味归经 (可选字段，兼容) */
+  property?: string;
+  
+  /** 药品属性 (可选字段，兼容) */
+  properties?: string;
+  
+  /** 是否激活 (可选字段，兼容) */
+  isActive?: boolean;
+  
   /** 元数据 (JSON格式) */
   metadata: object | null;
   

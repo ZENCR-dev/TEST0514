@@ -51,6 +51,22 @@ export interface QRParseResult {
  */
 export type PrescriptionParseStatus = 'idle' | 'parsing' | 'success' | 'error';
 
+/**
+ * 处方状态（旧名称，兼容性）
+ * @deprecated 请使用 PrescriptionParseStatus
+ */
+export type PrescriptionStatus = PrescriptionParseStatus;
+
+/**
+ * 处方状态枚举（实际可用的状态值）
+ */
+export enum PrescriptionStatusEnum {
+  PENDING = 'pending',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  EXPIRED = 'expired'
+}
+
 // ==================== 医师工作站扩展类型定义 ====================
 
 /**
@@ -63,10 +79,18 @@ export interface PrescriptionItem {
   medicineName: string;
   /** 药品英文名称 */
   medicineEnglishName?: string;
+  /** 英文名称（兼容字段） */
+  englishName?: string;
+  /** 中文名称（兼容字段） */
+  chineseName?: string;
   /** 用量（克） */
   quantity: number;
+  /** 重量（克，兼容字段） */
+  weight?: number;
   /** 单价（元/克） */
   pricePerGram: number;
+  /** 基础价格（元/克，兼容字段） */
+  basePrice?: number;
   /** 小计（元） */
   subtotal: number;
   /** 备注 */
@@ -159,6 +183,8 @@ export interface PrescriptionTemplate {
 export interface HistorySearchParams {
   /** 搜索关键词（患者姓名、处方ID等） */
   query?: string;
+  /** 搜索关键词（兼容字段） */
+  search?: string;
   /** 状态筛选 */
   status?: PrescriptionHistory['status'];
   /** 开始日期 */
@@ -208,4 +234,22 @@ export interface CreateTemplateData {
 /**
  * 更新模板数据
  */
-export interface UpdateTemplateData extends Partial<CreateTemplateData> {} 
+export interface UpdateTemplateData extends Partial<CreateTemplateData> {}
+
+/**
+ * 处方类型（旧名称，兼容性）
+ * @deprecated 请使用 PrescriptionHistory
+ */
+export type Prescription = PrescriptionHistory;
+
+/**
+ * 处方搜索参数（旧名称，兼容性）
+ * @deprecated 请使用 HistorySearchParams
+ */
+export type PrescriptionSearchParams = HistorySearchParams;
+
+/**
+ * 处方药品（旧名称，兼容性）
+ * @deprecated 请使用 PrescriptionItem
+ */
+export type PrescriptionMedicine = PrescriptionItem; 

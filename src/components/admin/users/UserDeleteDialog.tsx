@@ -38,6 +38,9 @@ export const UserDeleteDialog: React.FC<UserDeleteDialogProps> = ({
       admin: '管理员',
       doctor: '医生',
       pharmacy: '药房',
+      practitioner: '医师',
+      pharmacy_operator: '药房操作员',
+      patient: '患者',
     };
     return roleMap[role] || role;
   };

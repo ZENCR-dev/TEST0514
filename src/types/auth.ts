@@ -3,7 +3,7 @@ import { StandardApiResponse, ApiResponse, ErrorCode } from './api';
 /**
  * 定义用户角色类型
  */
-export type UserRole = 'doctor' | 'pharmacy' | 'admin';
+export type UserRole = 'doctor' | 'pharmacy' | 'admin' | 'practitioner' | 'pharmacy_operator' | 'patient';
 
 /**
  * 用户类型定义

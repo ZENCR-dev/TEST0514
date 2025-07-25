@@ -5,6 +5,8 @@ import { Medicine } from '@/types/medicine';
 
 interface MedicineSearchProps {
   onSelectMedicine: (medicine: Medicine) => void;
+  onSearch?: (query: string) => void;
+  onResults?: (results: Medicine[]) => void;
   maxDropdownHeight?: number; // 可以自定义下拉菜单高度
 }
 
@@ -202,4 +204,5 @@ const MedicineSearch = forwardRef<MedicineSearchRef, MedicineSearchProps>(({
 
 MedicineSearch.displayName = 'MedicineSearch';
 
-export default MedicineSearch; 
+export default MedicineSearch;
+export { MedicineSearch }; 
