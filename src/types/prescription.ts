@@ -58,6 +58,16 @@ export type PrescriptionParseStatus = 'idle' | 'parsing' | 'success' | 'error';
 export type PrescriptionStatus = PrescriptionParseStatus;
 
 /**
+ * 处方状态常量（用于测试和类型检查）
+ */
+export const PRESCRIPTION_STATUS = {
+  IDLE: 'idle' as const,
+  PARSING: 'parsing' as const,
+  SUCCESS: 'success' as const,
+  ERROR: 'error' as const
+} as const;
+
+/**
  * 处方状态枚举（实际可用的状态值）
  */
 export enum PrescriptionStatusEnum {
