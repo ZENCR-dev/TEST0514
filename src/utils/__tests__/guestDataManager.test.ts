@@ -106,8 +106,8 @@ describe('guestDataManager', () => {
       const savedPrescription = guestDataManager.savePrescription(mockPrescriptionData);
       const afterSave = new Date().toISOString();
       
-      expect(savedPrescription.createdAt).toBeGreaterThanOrEqual(beforeSave);
-      expect(savedPrescription.createdAt).toBeLessThanOrEqual(afterSave);
+      expect(new Date(savedPrescription.createdAt).getTime()).toBeGreaterThanOrEqual(new Date(beforeSave).getTime());
+      expect(new Date(savedPrescription.createdAt).getTime()).toBeLessThanOrEqual(new Date(afterSave).getTime());
     });
 
     it('应该正确标记为演示数据', () => {

@@ -13,27 +13,7 @@
 
 import { act, renderHook } from '@testing-library/react';
 import { useGuestModeStore } from '../guestModeStore';
-
-// Mock数据类型定义 (基于SOP文档规范)
-interface LocalPrescription {
-  id: string;
-  medicines: Array<{
-    medicineId: string;
-    pinyinName: string;
-    englishName: string;
-    chineseName: string;
-    weight: number;
-    unitPrice: number;
-    unit: string;
-  }>;
-  copies: number;
-  grossWeight: number;
-  totalPrice: number;
-  status: 'DRAFT' | 'PAID' | 'FULFILLED' | 'COMPLETED';
-  notes?: string;
-  createdAt: string;
-  isDemo: true;
-}
+import { LocalPrescription } from '../../types/guest';
 
 describe('guestModeStore', () => {
   beforeEach(() => {
@@ -159,11 +139,9 @@ describe('guestModeStore', () => {
           unit: 'g'
         }
       ],
-      copies: 7,
-      grossWeight: 70,
-      totalPrice: 25.87,
-      status: 'DRAFT',
-      notes: '测试处方备注',
+      instructions: '每日三次，饭后服用',
+      dosage: 7,
+      totalAmount: 25.87,
       createdAt: '2025-07-26T09:13:00.000Z',
       isDemo: true
     };
@@ -185,7 +163,7 @@ describe('guestModeStore', () => {
       const prescription2: LocalPrescription = {
         ...mockPrescription,
         id: 'test-prescription-2',
-        copies: 14
+        dosage: 14
       };
       
       act(() => {
@@ -252,10 +230,9 @@ describe('guestModeStore', () => {
       const emptyPrescription: LocalPrescription = {
         id: 'empty-prescription',
         medicines: [],
-        copies: 1,
-        grossWeight: 0,
-        totalPrice: 0,
-        status: 'DRAFT',
+        instructions: '空处方',
+        dosage: 1,
+        totalAmount: 0,
         createdAt: new Date().toISOString(),
         isDemo: true
       };
@@ -273,6 +250,26 @@ describe('guestModeStore', () => {
     it('Guest模式状态在操作后应该保持', () => {
       const { result } = renderHook(() => useGuestModeStore());
       
+      const mockPrescription: LocalPrescription = {
+        id: 'test-prescription-persist',
+        medicines: [
+          {
+            medicineId: 'med_001',
+            pinyinName: 'gaolishenpian',
+            englishName: 'Panax Ginseng',
+            chineseName: '高丽参片',
+            weight: 10,
+            unitPrice: 0.36956,
+            unit: 'g'
+          }
+        ],
+        instructions: '每日三次，饭后服用',
+        dosage: 7,
+        totalAmount: 25.87,
+        createdAt: '2025-07-26T09:13:00.000Z',
+        isDemo: true
+      };
+      
       act(() => {
         result.current.addTempPrescription(mockPrescription);
         result.current.setLanguage('en');
@@ -281,6 +278,39 @@ describe('guestModeStore', () => {
       expect(result.current.isGuestMode).toBe(true);
       expect(result.current.tempPrescriptions).toHaveLength(1);
       expect(result.current.language).toBe('en');
+    });
+  });
+
+  describe('兼容性测试', () => {
+    const completeMockPrescription: LocalPrescription = {
+      id: 'test-prescription-complete',
+      medicines: [
+        {
+          medicineId: 'med_001',
+          pinyinName: 'gaolishenpian',
+          englishName: 'Panax Ginseng',
+          chineseName: '高丽参片',
+          weight: 10,
+          unitPrice: 0.36956,
+          unit: 'g'
+        }
+      ],
+      instructions: '每日三次，饭后服用',
+      dosage: 7,
+      totalAmount: 25.87,
+      createdAt: '2025-07-26T09:13:00.000Z',
+      isDemo: true
+    };
+
+    it('应该支持完整的LocalPrescription对象', () => {
+      const { result } = renderHook(() => useGuestModeStore());
+      
+      act(() => {
+        result.current.addTempPrescription(completeMockPrescription);
+      });
+      
+      expect(result.current.tempPrescriptions).toHaveLength(1);
+      expect(result.current.tempPrescriptions[0]).toEqual(completeMockPrescription);
     });
   });
 });
