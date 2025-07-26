@@ -1,0 +1,124 @@
+# SuperClaude Commands Configuration for MVP TCM Platform
+# Version: 2.0.1 MVP Customized
+
+All_Commands: |
+  **Development Commands (3):**
+  
+  /build: Project builder with stack templates
+    Flags: --react, --api, --payment, --tdd, --watch
+    MVP Usage: /build --react --tdd --persona-frontend
+  
+  /dev-setup: Development environment setup
+    Flags: --ci, --monitor, --deps, --env
+    MVP Usage: /dev-setup --ci --monitor --env staging
+  
+  /test: Testing framework and execution
+    Flags: --coverage, --e2e, --integration, --unit, --watch
+    MVP Usage: /test --coverage --e2e --persona-test-engineer
+
+  **Analysis & Improvement Commands (5):**
+  
+  /analyze: Code and system analysis
+    Flags: --code, --architecture, --performance, --security
+    MVP Usage: /analyze --code --persona-architect --think
+  
+  /review: AI-powered code review with evidence
+    Flags: --quality, --evidence, --security, --performance
+    MVP Usage: /review --quality --evidence --persona-qa
+  
+  /troubleshoot: Debugging and issue resolution
+    Flags: --prod, --api, --payment, --integration, --five-whys
+    MVP Usage: /troubleshoot --api --persona-api-integrator --seq
+  
+  /improve: Enhancement and optimization
+    Flags: --performance, --security, --code-quality, --iterate
+    MVP Usage: /improve --performance --persona-performance
+  
+  /explain: Documentation and explanations
+    Flags: --depth, --visual, --examples, --architecture
+    MVP Usage: /explain --depth expert --visual --persona-mentor
+
+  **Operations Commands (6):**
+  
+  /deploy: Application deployment planning
+    Flags: --env, --plan, --validate, --rollback
+    MVP Usage: /deploy --env prod --plan --validate
+  
+  /scan: Security and validation audits
+    Flags: --security, --owasp, --deps, --validate
+    MVP Usage: /scan --security --owasp --persona-security
+  
+  /migrate: Database and code migrations
+    Flags: --dry-run, --rollback, --validate, --backup
+    MVP Usage: /migrate --dry-run --validate --backup
+  
+  /estimate: Project estimation and planning
+    Flags: --detailed, --worst-case, --best-case, --resources
+    MVP Usage: /estimate --detailed --worst-case --seq
+  
+  /cleanup: Project maintenance tasks
+    Flags: --all, --validate, --deps, --cache
+    MVP Usage: /cleanup --all --validate --deps
+  
+  /git: Git workflow management
+    Flags: --workflow, --feature-branch, --hotfix, --release
+    MVP Usage: /git --workflow --feature-branch
+
+  **Design & Workflow Commands (5):**
+  
+  /design: System architecture planning
+    Flags: --api, --ddd, --bounded-context, --microservices
+    MVP Usage: /design --api --ddd --persona-architect
+  
+  /spawn: Parallel task execution
+    Flags: --parallel, --tasks, --workers, --queue
+    MVP Usage: /spawn --parallel --tasks --workers 4
+  
+  /document: Documentation creation
+    Flags: --comprehensive, --api, --user-guide, --technical
+    MVP Usage: /document --comprehensive --persona-mentor
+  
+  /load: Project context loading
+    Flags: --full, --recent, --specific, --cache
+    MVP Usage: /load --full --recent
+  
+  /task: Task management and tracking
+    Flags: --create, --manage, --track, --priority
+    MVP Usage: /task --create --manage --priority high
+
+Universal_Flags: |
+  **Available on ALL Commands:**
+  
+  Thinking Depth:
+  --think: Multi-file analysis (~4K tokens)
+  --think-hard: Architecture analysis (~10K tokens)
+  --ultrathink: Deep system analysis (~32K tokens)
+  
+  Token Optimization:
+  --uc / --ultracompressed: Token reduction mode
+  
+  MCP Tools:
+  --c7: Context7 documentation lookup
+  --seq: Sequential thinking analysis
+  --magic: Magic UI component generation
+  --pup: Puppeteer browser automation
+  
+  Personas: All 13 personas available as --persona-[name]
+
+MVP_Command_Patterns: |
+  **Common MVP Development Workflows:**
+  
+  Frontend Development:
+  /load → /analyze --code --persona-frontend → /build --react --tdd → /test --coverage
+  
+  API Integration:
+  /analyze --api --persona-api-integrator → /troubleshoot --integration → /test --integration
+  
+  Payment Features:
+  /design --payment --persona-payment-specialist → /build --payment --tdd → /scan --security
+  
+  Testing Optimization:
+  /analyze --test --persona-test-engineer → /improve --coverage → /test --e2e --pup
+  
+  Performance Tuning:
+  /analyze --performance --persona-performance → /improve --performance → /test --performance

@@ -1,0 +1,155 @@
+# RIPER-5 Integration Configuration for MVP TCM Platform
+# Version: 2.0.1 MVP Customized
+
+RIPER_Mode_Integration: |
+  **MANDATORY MODE DECLARATION:**
+  YOU MUST BEGIN EVERY SINGLE RESPONSE WITH [MODE: MODE_NAME]
+  
+  **Available RIPER Modes:**
+  
+  [MODE: RESEARCH] - Information gathering and deep understanding
+  - Permitted: Analysis, investigation, context gathering
+  - Forbidden: Implementation, code changes, planning details
+  - Focus: Understanding current state and requirements
+  
+  [MODE: INNOVATE] - Brainstorming potential approaches
+  - Permitted: Solution exploration, approach evaluation
+  - Forbidden: Concrete planning, implementation, code writing
+  - Focus: Creative problem-solving and option generation
+  
+  [MODE: PLAN] - Creating exhaustive technical specification
+  - Permitted: Detailed plans, specifications, checklists
+  - Forbidden: Implementation, even example code
+  - Focus: Complete technical planning and approval
+  
+  [MODE: EXECUTE] - Implementing EXACTLY what was planned
+  - Permitted: ONLY planned implementations
+  - Forbidden: Deviations, improvements, creative additions
+  - Focus: Precise execution of approved plans
+  
+  [MODE: REVIEW] - Ruthlessly validate implementation against plan
+  - Permitted: Verification, validation, quality checks
+  - Forbidden: New implementations or plan changes
+  - Focus: Quality assurance and compliance verification
+
+RIPER_Command_Integration: |
+  **SuperClaude Commands with RIPER Enforcement:**
+  
+  All SuperClaude commands must respect RIPER mode restrictions:
+  
+  RESEARCH Mode Commands:
+  - /load: Load project context
+  - /analyze: Code and system analysis
+  - /explain: Documentation and explanations
+  
+  INNOVATE Mode Commands:
+  - /design: System architecture planning
+  - /estimate: Project estimation
+  
+  PLAN Mode Commands:
+  - /task: Task management and detailed planning
+  - /document: Planning documentation
+  
+  EXECUTE Mode Commands:
+  - /build: Implementation only
+  - /test: Test execution only
+  - /deploy: Deployment execution only
+  
+  REVIEW Mode Commands:
+  - /review: Code review and validation
+  - /scan: Security and quality validation
+
+MVP_RIPER_Workflow: |
+  **MVP Project RIPER Workflow Examples:**
+  
+  **Frontend Feature Development:**
+  1. [MODE: RESEARCH] /load → /analyze --code --persona-frontend
+  2. [MODE: INNOVATE] /design --ui --persona-frontend
+  3. [MODE: PLAN] /task --create --detailed-plan
+  4. [MODE: EXECUTE] /build --react --tdd --persona-frontend
+  5. [MODE: REVIEW] /review --quality --evidence --persona-qa
+  
+  **API Integration:**
+  1. [MODE: RESEARCH] /analyze --api --persona-api-integrator
+  2. [MODE: INNOVATE] /design --integration --persona-backend
+  3. [MODE: PLAN] /task --integration-plan --detailed
+  4. [MODE: EXECUTE] /build --api --integration --persona-api-integrator
+  5. [MODE: REVIEW] /test --integration --persona-test-engineer
+  
+  **Payment System:**
+  1. [MODE: RESEARCH] /analyze --payment --persona-payment-specialist
+  2. [MODE: INNOVATE] /design --payment-flow --persona-security
+  3. [MODE: PLAN] /task --payment-implementation --security-review
+  4. [MODE: EXECUTE] /build --payment --secure --persona-payment-specialist
+  5. [MODE: REVIEW] /scan --security --payment --persona-security
+
+RIPER_Transition_Rules: |
+  **Mode Transition Signals:**
+  
+  Only transition modes when explicitly signaled:
+  - "ENTER RESEARCH MODE"
+  - "ENTER INNOVATE MODE"
+  - "ENTER PLAN MODE"
+  - "ENTER EXECUTE MODE"
+  - "ENTER REVIEW MODE"
+  
+  **Automatic Transitions:**
+  - EXECUTE → PLAN: When deviation from plan is needed
+  - EXECUTE → REVIEW: When all implementations complete
+  - REVIEW → PLAN: When issues found requiring replanning
+  
+  **Default Mode:**
+  - Begin each conversation in RESEARCH mode
+  - Maintain current mode until explicit transition signal
+
+RIPER_Quality_Gates: |
+  **Mode-Specific Quality Requirements:**
+  
+  RESEARCH Mode:
+  - Complete context gathering
+  - Thorough problem understanding
+  - Clear requirement identification
+  
+  INNOVATE Mode:
+  - Multiple solution approaches
+  - Pros/cons evaluation
+  - Creative problem-solving
+  
+  PLAN Mode:
+  - Detailed implementation steps
+  - Complete technical specifications
+  - Approval-ready documentation
+  
+  EXECUTE Mode:
+  - 100% plan adherence
+  - Complete implementations
+  - No unauthorized changes
+  
+  REVIEW Mode:
+  - Thorough validation
+  - Quality metrics verification
+  - Compliance confirmation
+
+MVP_RIPER_Standards: |
+  **MVP Project Specific RIPER Standards:**
+  
+  **Prescription Module RIPER:**
+  - RESEARCH: TCM rules and requirements analysis
+  - INNOVATE: Prescription flow design options
+  - PLAN: Detailed prescription logic specification
+  - EXECUTE: Exact prescription implementation
+  - REVIEW: TCM compliance and validation
+  
+  **Payment Module RIPER:**
+  - RESEARCH: Payment requirements and security analysis
+  - INNOVATE: Payment flow and security design
+  - PLAN: Stripe integration and security specification
+  - EXECUTE: Secure payment implementation
+  - REVIEW: Security audit and PCI compliance
+  
+  **Testing RIPER:**
+  - RESEARCH: Current test coverage and gap analysis
+  - INNOVATE: Test strategy and coverage improvement
+  - PLAN: Detailed test implementation plan
+  - EXECUTE: Test implementation and execution
+  - REVIEW: Coverage verification and quality validation

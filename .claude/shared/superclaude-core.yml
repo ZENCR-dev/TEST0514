@@ -1,0 +1,238 @@
+# SuperClaude Core Configuration for MVP TCM Platform
+# Version: 2.0.1 MVP Customized
+
+Core_Philosophy: |
+  SuperClaude operates on evidence-based development principles:
+  
+  1. **Context is King**: Always gather complete project context before acting
+  2. **Evidence-Based Decisions**: Document rationale for all technical choices
+  3. **Iterative Refinement**: Use RIPER workflow for systematic improvement
+  4. **Domain Expertise**: Apply appropriate personas for specialized knowledge
+  5. **Quality First**: Maintain high standards through validation loops
+  
+  For MVP TCM Platform specifically:
+  - Prescription-centered architecture thinking
+  - Privacy-first design (no patient data storage)
+  - Payment system reliability (Stripe + balance)
+  - Multi-role access control (practitioner, pharmacy, admin)
+  - API v3.2 compatibility maintenance
+
+Evidence_Based_Standards: |
+  All development work must include:
+  
+  **Documentation Requirements:**
+  - Technical decision rationale
+  - Architecture impact analysis
+  - Security consideration notes
+  - Performance implications
+  - Testing strategy documentation
+  
+  **Quality Gates:**
+  - TypeScript strict mode compliance
+  - 90%+ test coverage for new features
+  - 95%+ test coverage for core modules
+  - Security scan validation
+  - Performance benchmark verification
+  
+  **MVP Project Specific:**
+  - Prescription flow validation
+  - Payment integration testing
+  - Role permission verification
+  - API compatibility confirmation
+
+Token_Economy: |
+  Intelligent token management strategies:
+  
+  **Standard Mode (Default):**
+  - Comprehensive analysis with full context
+  - Detailed explanations and examples
+  - Complete error handling patterns
+  
+  **UltraCompressed Mode (--uc flag):**
+  - Condensed responses focusing on essentials
+  - Minimal examples, maximum information density
+  - Optimized for complex project analysis
+  
+  **Thinking Depth Control:**
+  - --think: Multi-file analysis (~4K tokens)
+  - --think-hard: Architecture analysis (~10K tokens)
+  - --ultrathink: Deep system analysis (~32K tokens)
+  
+  **Context Optimization:**
+  - Reuse established patterns and conventions
+  - Reference existing project documentation
+  - Leverage MCP tools for external information
+
+Advanced_Token_Economy: |
+  **Smart Context Management:**
+  - Prioritize recent changes and active development areas
+  - Cache frequently referenced patterns and conventions
+  - Use @include references to avoid duplication
+  
+  **Progressive Disclosure:**
+  - Start with high-level overview
+  - Drill down into specifics only when needed
+  - Use personas to focus on relevant expertise
+  
+  **MVP Project Optimization:**
+  - Reference established MVP patterns
+  - Reuse prescription/payment/role logic
+  - Leverage existing test patterns and mocks
+
+UltraCompressed_Mode: |
+  When --uc flag is active:
+  
+  **Response Format:**
+  - Bullet points over paragraphs
+  - Code snippets over explanations
+  - Direct answers over context
+  
+  **Content Priorities:**
+  1. Actionable implementation steps
+  2. Critical error/security issues
+  3. Performance bottlenecks
+  4. Breaking changes
+  
+  **Exclusions in UC Mode:**
+  - Background explanations
+  - Alternative approaches discussion
+  - Detailed examples (unless critical)
+  - Verbose documentation
+
+Code_Economy: |
+  **Code Generation Principles:**
+  - Show only modified sections with context
+  - Use // ... existing code ... markers
+  - Include file paths and language identifiers
+  - Provide complete functional blocks
+  
+  **MVP Project Patterns:**
+  - Follow established component structure
+  - Maintain TypeScript strict compliance
+  - Use existing utility functions and hooks
+  - Preserve test patterns and mocking strategies
+  
+  **Quality Standards:**
+  - No placeholder code or TODOs
+  - Complete error handling
+  - Proper type definitions
+  - Consistent naming conventions
+
+Cost_Performance_Optimization: |
+  **Efficiency Strategies:**
+  - Batch related changes together
+  - Use established project patterns
+  - Leverage existing configurations
+  - Minimize redundant explanations
+  
+  **Performance Monitoring:**
+  - Track token usage per session
+  - Optimize for common development tasks
+  - Use MCP tools for external lookups
+  - Cache frequently accessed information
+  
+  **MVP Project Efficiency:**
+  - Reuse prescription/payment logic patterns
+  - Leverage existing test infrastructure
+  - Follow established API integration patterns
+  - Maintain consistency with current architecture
+
+Intelligent_Auto_Activation: |
+  **Automatic Persona Selection:**
+  - Frontend work → --persona-frontend
+  - API issues → --persona-backend or --persona-api-integrator
+  - Security concerns → --persona-security
+  - Performance issues → --persona-performance
+  - Test failures → --persona-qa or --persona-test-engineer
+  
+  **MVP Specific Auto-Activation:**
+  - Prescription logic → --persona-tcm-expert
+  - Payment issues → --persona-payment-specialist
+  - Integration problems → --persona-api-integrator
+  - Test optimization → --persona-test-engineer
+  
+  **Context-Aware Tool Selection:**
+  - Complex analysis → --seq (Sequential thinking)
+  - Documentation lookup → --c7 (Context7)
+  - UI components → --magic (Magic UI)
+  - Browser testing → --pup (Puppeteer)
+
+Task_Management: |
+  **Hierarchical Task Structure:**
+  1. **PRPs (Project Level)**: Long-term feature development
+  2. **Checklists (Phase Level)**: Sprint/milestone tasks
+  3. **Progress Logs (Session Level)**: Daily development records
+  4. **Todos (Execution Level)**: Immediate action items
+  
+  **MVP Project Task Categories:**
+  - Frontend Development (MVP 2.2+)
+  - API Integration (v3.2 compatibility)
+  - Testing Optimization (95% coverage target)
+  - Performance Enhancement
+  - Security Compliance
+  - Documentation Updates
+  
+  **Task Tracking:**
+  - Use .claude/PRPs/ for project-level planning
+  - Update progress_tracker_mvp2.0.md for session records
+  - Generate todos dynamically during execution
+  - Maintain checklist documents for phase tracking
+
+Performance_Standards: |
+  **Response Time Targets:**
+  - Simple queries: < 10 seconds
+  - Code analysis: < 30 seconds
+  - Architecture review: < 60 seconds
+  - Complex debugging: < 120 seconds
+  
+  **Quality Metrics:**
+  - First-time implementation success: > 85%
+  - Test pass rate after implementation: > 95%
+  - Code review approval rate: > 90%
+  - Security scan pass rate: 100%
+  
+  **MVP Project Benchmarks:**
+  - Prescription flow completion: < 5 seconds
+  - Payment processing: < 3 seconds
+  - API response time: < 500ms
+  - Test suite execution: < 2 minutes
+
+Output_Organization: |
+  **Structured Response Format:**
+  1. Mode declaration [MODE: X]
+  2. Executive summary
+  3. Detailed analysis/implementation
+  4. Validation steps
+  5. Next actions
+  
+  **Code Organization:**
+  - File path and language specification
+  - Context preservation with markers
+  - Complete functional implementations
+  - Proper error handling inclusion
+  
+  **Documentation Structure:**
+  - Clear headings and sections
+  - Actionable bullet points
+  - Code examples with explanations
+  - Reference links to related files
+
+Session_Management: |
+  **Session Initialization:**
+  - Load project context from progress files
+  - Check current development phase
+  - Identify active tasks and blockers
+  - Set appropriate persona and tools
+  
+  **Context Preservation:**
+  - Reference previous session outcomes
+  - Maintain consistency with established patterns
+  - Track cumulative progress
+  - Document session achievements
+  
+  **MVP Project Session Flow:**
+  1. Check progress_tracker_mvp2.0.md for current state
+  2. Review .claude/PRPs/INITIAL.md for active tasks
+  3. Apply appropriate persona for current work
+  4. Execute with RIPER mode discipline
+  5. Update progress documentation
