@@ -4,7 +4,7 @@
 
 **版本**: MVP1.9  
 **创建日期**: 2025-07-22  
-**分支名称**: Grey test July  
+**分支名称**: MVP1.9 
 **文档类型**: 标准操作程序 (SOP)  
 **实施周期**: 8天 (分4个Phase)  
 
@@ -359,13 +359,7 @@ export const guestDataManager = new GuestDataManager();
 **目标**: 建立Guest模式基础架构
 
 **实施步骤**:
-1. **Git分支创建**
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b "Grey-test-July"
-   git push -u origin Grey-test-July
-   ```
+
 
 2. **Guest模式Store创建**
    - 创建 `src/store/guestModeStore.ts`

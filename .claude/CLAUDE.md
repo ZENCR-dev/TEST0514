@@ -4,7 +4,7 @@
 
 **Last Updated**: 2025-07-22  
 **Current Phase**: MVP1.9 Guest Mode Development Planning  
-**Development Branch**: Grey-test-July (pending creation)  
+**Development Branch**: MVP1.9  
 
 ---
 
@@ -55,7 +55,6 @@ Available Modes:
 
 **层级2: Checklist（阶段级基石文档）**
 - **指定文档**: `docs/MVP1.9-SOP-Implementation.md`
-- **伴生文档**: `@docs/MVP1.9-Checklist.md`（推荐创建）
 - **特征**: 改动频率低，影响范围中等
 - **功能**: 阶段性任务序列和里程碑管理，基于RIPER工作流
 - **维护方式**: 单一文档或伴生文档记录Phase级任务清单
