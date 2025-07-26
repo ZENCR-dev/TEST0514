@@ -1,0 +1,5 @@
+# 本地环境文件
+!.env.local
+!.env.development.local
+!.env.test.local
+!.env.production.local 
