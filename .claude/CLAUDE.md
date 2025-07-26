@@ -220,4 +220,72 @@ Available Modes:
 
 ---
 
+## 🔄 GitHub同步开发进度管理
+
+### Checkpoint Restore核心原则
+- **精简提交**: 每次commit内容简短聚焦
+- **命令行优先**: 全部使用git命令行工具实现
+- **进度同步**: 实现跨设备开发状态恢复
+
+### 标准Git工作流
+
+#### 开发检查点创建
+```bash
+# 快速状态检查
+git status --short
+
+# 添加变更文件
+git add .
+
+# 精简提交格式
+git commit -m "feat: [功能简述]" 
+git commit -m "fix: [问题简述]"
+git commit -m "docs: [文档更新]"
+git commit -m "refactor: [重构内容]"
+
+# 推送检查点
+git push origin [branch-name]
+```
+
+#### 检查点恢复流程
+```bash
+# 拉取最新状态
+git fetch origin
+
+# 恢复到最新检查点
+git reset --hard origin/[branch-name]
+
+# 查看最近3次检查点
+git log --oneline -3
+
+# 恢复到特定检查点
+git reset --hard [commit-hash]
+```
+
+#### 分支同步策略
+```bash
+# 创建功能分支
+git checkout -b feature/[简短描述]
+
+# 定期同步主分支
+git fetch origin main
+git rebase origin/main
+
+# 合并到主分支
+git checkout main
+git merge --no-ff feature/[简短描述]
+git push origin main
+```
+
+### 提交消息规范
+- **feat**: 新功能 (≤50字符)
+- **fix**: 错误修复 (≤50字符)  
+- **docs**: 文档更新 (≤50字符)
+- **style**: 代码格式 (≤50字符)
+- **refactor**: 代码重构 (≤50字符)
+- **test**: 测试相关 (≤50字符)
+- **chore**: 构建/工具 (≤50字符)
+
+---
+
 **SuperClaude v2.0.1 for MVP TCM Platform | TDD methodology | RIPER workflow integration | Guest Mode Development**
